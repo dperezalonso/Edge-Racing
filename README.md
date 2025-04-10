@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Edge-Racing
+Este es el repositorio conjunto para el projecto de M12 en el que crearemos una webApp para la visualizacion y gestión de Edge Racing.
 
-## Getting Started
 
-First, run the development server:
+# Descripción
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Este proyecto implementa una base de datos para gestionar una organización que administra competiciones con circuitos, carreras, equipos y pilotos. La base de datos está construida utilizando Prisma ORM y se integra en un entorno Next.js.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+# Tecnologías Utilizadas
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Next.js - Framework para React con soporte para backend
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Prisma ORM - Manejo eficiente de la base de datos
 
-## Learn More
+MySQL o PostgresSQL- Motor de base de datos relacional
 
-To learn more about Next.js, take a look at the following resources:
+# Estructura de la Base de Datos
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+La base de datos contiene las siguientes entidades:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Competicion: Contiene información de las distintas competiciones.
 
-## Deploy on Vercel
+Circuito: Representa los diferentes circuitos donde se llevan a cabo las carreras.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Carrera: Almacena información sobre cada carrera en un circuito y su relación con una competición.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Equipo: Representa los equipos que participan en una competición.
+
+Piloto: Contiene la información de los pilotos asociados a equipos.
+
+Resultado: Registra los resultados de cada carrera para cada piloto.
+
+
