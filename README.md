@@ -31,3 +31,33 @@ Piloto: Contiene la información de los pilotos asociados a equipos.
 Resultado: Registra los resultados de cada carrera para cada piloto.
 
 
+## 🚀 Flujo de trabajo con ramas
+
+Este proyecto sigue una estrategia de ramas para mantener la estabilidad del código en `main` mientras se desarrollan nuevas funcionalidades en `dev`.
+
+---
+
+### 🌱 Ramas principales
+
+- `main`: Rama estable. Solo se mergea código probado y funcional.
+- `dev`: Rama de desarrollo. Se trabaja día a día y se testean nuevas funcionalidades.
+
+---
+
+
+### 🛠️ Pasar cambios de `dev` a `main`
+
+Cuando todo esté listo en la rama `dev`, seguí estos pasos para integrar los cambios en `main`:
+
+```bash
+# 1. Ir a la rama main
+git checkout main
+
+# 2. Actualizar con lo último desde el remoto
+git pull
+
+# 3. Hacer merge desde dev
+git merge dev
+
+# 4. Subir la rama main actualizada a GitHub
+git push origin main
