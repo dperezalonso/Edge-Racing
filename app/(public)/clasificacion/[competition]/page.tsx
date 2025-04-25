@@ -69,7 +69,7 @@ export default function CompetitionPage() {
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center">
             {competition.logo ? (
-              <div className="mr-4 size-12">
+              <div className="mr-4 size-12 bg-white rounded-full p-1">
                 <Image 
                   src={competition.logo} 
                   alt={competition.name} 

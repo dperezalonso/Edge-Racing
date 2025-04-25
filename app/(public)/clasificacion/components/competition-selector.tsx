@@ -40,7 +40,7 @@ export default function CompetitionSelector({
             }}
           >
             <div className="flex items-center p-6 bg-[color:var(--racing-gray)]/30 backdrop-blur-sm">
-              <div className="mr-6 flex-shrink-0 relative size-16 flex items-center justify-center">
+              <div className="mr-6 flex-shrink-0 relative size-16 flex items-center justify-center bg-white">
                 {competition.logo ? (
                   <Image 
                     src={competition.logo} 
