@@ -10,7 +10,7 @@ export default function SideNav() {
       <div className="mt-auto border-t border-gray-800 pt-4 px-3">
         <Link 
           href="/"
-          className="flex items-center gap-2 rounded-md py-2 px-3 text-sm hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
+          className="flex items-center gap-2 rounded-md py-2 px-3 text-sm hover:bg-[color:var(--f1-dark-blue)] text-gray-400 hover:text-white transition-colors"
         >
           <svg 
             xmlns="http://www.w3.org/2000/svg" 

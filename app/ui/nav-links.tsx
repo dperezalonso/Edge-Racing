@@ -18,17 +18,21 @@ export default function NavLinks() {
       {links.map((link) => {
         const isActive = pathname === link.href;
         
-        const baseClasses = 'flex items-center gap-3 rounded-md py-2 px-3 text-sm transition-colors';
-        const activeClasses = isActive ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800';
-        
         return (
           <Link
             key={link.name}
             href={link.href}
-            className={`${baseClasses} ${activeClasses}`}
+            className={`flex items-center gap-3 rounded-md py-2 px-3 text-sm transition-all relative ${
+              isActive 
+                ? 'bg-[color:var(--f1-red)]/20 text-white font-medium border-l-2 border-[color:var(--f1-red)]' 
+                : 'text-gray-400 hover:text-white hover:bg-[color:var(--f1-dark-blue)]'
+            }`}
           >
             <Icon name={link.name} />
-            <p>{link.name}</p>
+            <span>{link.name}</span>
+            {isActive && (
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-[color:var(--f1-red)]"></span>
+            )}
           </Link>
         );
       })}
@@ -36,6 +40,7 @@ export default function NavLinks() {
   );
 }
 
+// Simple Icon component 
 function Icon({ name }: { name: string }) {
   return (
     <span className="w-5 h-5 flex items-center justify-center">
