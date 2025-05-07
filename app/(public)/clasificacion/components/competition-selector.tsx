@@ -14,21 +14,24 @@ type Competition = {
 };
 
 export default function CompetitionSelector({
-  competitions
+  competitions,
+  baseRoute = "/clasificacion" // Parámetro con valor por defecto
 }: {
   competitions: Competition[];
+  baseRoute?: string;
 }) {
   const pathname = usePathname();
-  const isRootPath = pathname === "/clasificacion";
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {competitions.map((competition) => {
-        const isActive = pathname.includes(`/clasificacion/${competition.id}`);
+        // Esto detectará si la ruta actual contiene la ID de competición
+        // independientemente de si está en clasificacion o competiciones
+        const isActive = pathname.includes(`/${competition.id}`);
         
         return (
           <Link 
-            href={`/clasificacion/${competition.id}`}
+            href={`${baseRoute}/${competition.id}`}
             key={competition.id}
             className={`relative group overflow-hidden rounded-lg border transition-all ${
               isActive 

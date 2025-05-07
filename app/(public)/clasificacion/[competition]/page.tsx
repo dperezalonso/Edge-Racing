@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import CompetitionSelector from "../components/competition-selector";
 import PilotClassification from "../components/pilot-classification";
 import TeamClassification from "../components/team-classification";
-import ViewTabs from "../components/view-tabs";
 import { 
   competitions, 
   f1Drivers, 
@@ -19,7 +17,6 @@ import {
 export default function CompetitionPage() {
   const params = useParams();
   const competitionId = params.competition as string;
-  const [activeView, setActiveView] = useState<"drivers" | "teams">("drivers");
   
   const competition = competitions.find(comp => comp.id === competitionId);
   
@@ -62,7 +59,7 @@ export default function CompetitionPage() {
 
       <div className="mb-10">
         <h2 className="text-xl font-semibold mb-4">Selecciona una competición</h2>
-        <CompetitionSelector competitions={competitions} />
+        <CompetitionSelector competitions={competitions} baseRoute="/clasificacion" />
       </div>
       
       <div className="bg-[color:var(--racing-gray)]/30 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
@@ -102,22 +99,24 @@ export default function CompetitionPage() {
           </div>
         </div>
 
-        <ViewTabs 
-          onTabChange={setActiveView}
-          competitionId={competitionId}
-        />
-        
-        {activeView === "drivers" ? (
+        {/* Pilotos */}
+        <div className="mb-12">
           <PilotClassification 
             drivers={drivers} 
             competitionId={competitionId} 
           />
-        ) : (
+        </div>
+        
+        {/* Separador visual */}
+        <div className="my-8 border-t border-gray-800"></div>
+        
+        {/* Equipos */}
+        <div>
           <TeamClassification 
             teams={teams} 
             competitionId={competitionId} 
           />
-        )}
+        </div>
       </div>
     </div>
   );
