@@ -1,25 +1,70 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import CompetitionSelector from "../components/competition-selector";
 import PilotClassification from "../components/pilot-classification";
 import TeamClassification from "../components/team-classification";
-import { 
-  competitions, 
-  f1Drivers, 
-  f1Teams, 
-  motogpRiders, 
-  motogpTeams 
-} from "../data";
+import ViewTabs from "../components/view-tabs";
+import { useCompetitions } from "@/lib/hooks/useCompetitions";
+import { useDrivers } from "@/lib/hooks/useDrivers";
+import { useTeams } from "@/lib/hooks/useTeams";
 
 export default function CompetitionPage() {
   const params = useParams();
   const competitionId = params.competition as string;
+  const [activeView, setActiveView] = useState<"drivers" | "teams">("drivers");
   
-  const competition = competitions.find(comp => comp.id === competitionId);
+  const { competitions, loading: competitionsLoading } = useCompetitions();
+  const { drivers, getDriversByCompetition, loading: driversLoading } = useDrivers();
+  const { teams, getTeamsByCompetition, loading: teamsLoading } = useTeams();
   
+  const [filteredDrivers, setFilteredDrivers] = useState<any[]>([]);
+  const [filteredTeams, setFilteredTeams] = useState<any[]>([]);
+  const [competition, setCompetition] = useState<any>(null);
+  
+  // Obtener la competición seleccionada y filtrar pilotos/equipos
+  useEffect(() => {
+    if (!competitionsLoading && competitions.length > 0) {
+      const selectedCompetition = competitions.find(comp => comp.id === competitionId);
+      setCompetition(selectedCompetition || null);
+    }
+    
+    if (!driversLoading && !competitionsLoading && competitions.length > 0) {
+      const driversForCompetition = getDriversByCompetition(competitionId);
+      setFilteredDrivers(driversForCompetition);
+    }
+    
+    if (!teamsLoading && !competitionsLoading && competitions.length > 0) {
+      const teamsForCompetition = getTeamsByCompetition(competitionId);
+      setFilteredTeams(teamsForCompetition);
+    }
+  }, [
+    competitionId, 
+    competitions, 
+    drivers, 
+    teams, 
+    competitionsLoading, 
+    driversLoading, 
+    teamsLoading,
+    getDriversByCompetition,
+    getTeamsByCompetition
+  ]);
+  
+  // Mostrar indicador de carga
+  if (competitionsLoading || driversLoading || teamsLoading) {
+    return (
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Si no se encuentra la competición
   if (!competition) {
     return (
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -42,10 +87,6 @@ export default function CompetitionPage() {
     );
   }
   
-  // Determinar qué datos mostrar según la competición
-  const drivers = competitionId === "formula1" ? f1Drivers : motogpRiders;
-  const teams = competitionId === "formula1" ? f1Teams : motogpTeams;
-  
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-8 text-center">
@@ -59,7 +100,7 @@ export default function CompetitionPage() {
 
       <div className="mb-10">
         <h2 className="text-xl font-semibold mb-4">Selecciona una competición</h2>
-        <CompetitionSelector competitions={competitions} baseRoute="/clasificacion" />
+        <CompetitionSelector competitions={competitions} />
       </div>
       
       <div className="bg-[color:var(--racing-gray)]/30 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
@@ -99,24 +140,22 @@ export default function CompetitionPage() {
           </div>
         </div>
 
-        {/* Pilotos */}
-        <div className="mb-12">
+        <ViewTabs 
+          onTabChange={setActiveView}
+          competitionId={competitionId}
+        />
+        
+        {activeView === "drivers" ? (
           <PilotClassification 
-            drivers={drivers} 
+            drivers={filteredDrivers} 
             competitionId={competitionId} 
           />
-        </div>
-        
-        {/* Separador visual */}
-        <div className="my-8 border-t border-gray-800"></div>
-        
-        {/* Equipos */}
-        <div>
+        ) : (
           <TeamClassification 
-            teams={teams} 
+            teams={filteredTeams} 
             competitionId={competitionId} 
           />
-        </div>
+        )}
       </div>
     </div>
   );

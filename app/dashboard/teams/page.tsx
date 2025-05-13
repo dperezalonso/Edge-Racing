@@ -1,83 +1,82 @@
 'use client';
 
-// import { useState } from 'react';
-// import { TeamForm } from '@/app/ui/teams/team-form';
-// import { TeamsTable } from '@/app/ui/teams/teams-table';
-// import { Search } from '@/app/ui/teams/search';
-// import { CompetitionFilter } from '@/app/ui/shared/competition-filter';
+import { useState, useEffect } from 'react';
+import { useTeams } from '@/lib/hooks/useTeams';
+import { useCompetitions, Competition } from '@/lib/hooks/useCompetitions';
+import DataTable from '@/components/crud/DataTable';
 
 export default function TeamsPage() {
-  // const [selectedCompetition, setSelectedCompetition] = useState<string>('all');
-  // const [searchQuery, setSearchQuery] = useState<string>('');
-  // const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  // const [editingTeam, setEditingTeam] = useState<any>(null);
+  const { teams, loading, error, deleteTeam } = useTeams();
+  const { competitions } = useCompetitions();
+  const [competitionOptions, setCompetitionOptions] = useState<{ label: string; value: string }[]>([]);
 
-  // Función para abrir el formulario para crear un nuevo equipo
-  // const handleAddTeam = () => {
-  //   setEditingTeam(null);
-  //   setIsFormOpen(true);
-  // };
+  useEffect(() => {
+    // Preparar opciones para el filtro de competiciones
+    if (competitions.length > 0) {
+      const options = competitions.map((comp: Competition) => ({
+        label: comp.name,
+        value: comp.id
+      }));
+      setCompetitionOptions(options);
+    }
+  }, [competitions]);
 
-  // // Función para abrir el formulario para editar un equipo existente
-  // const handleEditTeam = (team: any) => {
-  //   setEditingTeam(team);
-  //   setIsFormOpen(true);
-  // };
+  // Definir columnas para la tabla de equipos
+  const columns = [
+    { key: 'position', label: 'Pos' },
+    { 
+      key: 'team', 
+      label: 'Equipo',
+      render: (item: any) => (
+        <div className="flex items-center">
+          <div 
+            className="w-4 h-4 rounded-full mr-2" 
+            style={{ backgroundColor: item.color }}
+          ></div>
+          {item.team}
+        </div>
+      ) 
+    },
+    { key: 'points', label: 'Puntos' },
+    { key: 'wins', label: 'Victorias' },
+    { key: 'podiums', label: 'Podios' },
+    { 
+      key: 'competitionId', 
+      label: 'Competición',
+      render: (item: any) => {
+        const competition = competitions.find(c => c.id === item.competitionId);
+        return competition ? competition.name : item.competitionId;
+      }
+    },
+  ];
 
-  // // Función para cerrar el formulario
-  // const handleCloseForm = () => {
-  //   setIsFormOpen(false);
-  //   setEditingTeam(null);
-  // };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-900/50 border border-red-800 rounded-md p-4 text-red-300">
+        {error}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl md:text-3xl font-bold">Equipos</h1>
-        <button
-          // onClick={handleAddTeam}
-          className="bg-[color:var(--f1-red)] hover:bg-[color:var(--f1-red)]/80 text-white py-2 px-4 rounded-md flex items-center gap-2 transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Añadir Equipo
-        </button>
-      </div>
-
-      <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1">
-            {/* <Search placeholder="Buscar equipos..." onSearch={setSearchQuery} /> */}
-          </div>
-          <div className="w-full md:w-64">
-            {/* <CompetitionFilter
-              value={selectedCompetition}
-              onChange={setSelectedCompetition}
-            /> */}
-          </div>
-        </div>
-
-        {/* <TeamsTable 
-          competitionFilter={selectedCompetition} 
-          searchQuery={searchQuery} 
-          onEdit={handleEditTeam}
-        /> */}
-      </div>
-
-      {/* {isFormOpen && (
-        <TeamForm
-          team={editingTeam}
-          onClose={handleCloseForm}
-        />
-      )} */}
+    <div>
+      <DataTable
+        data={teams}
+        columns={columns}
+        entityName="Equipos"
+        entityPath="teams"
+        onDelete={deleteTeam}
+        filterOptions={competitionOptions}
+        filterKey="competitionId"
+      />
     </div>
   );
 }

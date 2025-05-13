@@ -1,83 +1,81 @@
 'use client';
 
-import { useState } from 'react';
-// import { DriverForm } from '@/app/ui/drivers/driver-form';
-// import { DriversTable } from '@/app/ui/drivers/drivers-table';
-import { Search } from '@/app/ui/drivers/search';
-import { CompetitionFilter } from '@/app/ui/shared/competition-filter';
+import { useState, useEffect } from 'react';
+import { useDrivers } from '@/lib/hooks/useDrivers';
+import { useCompetitions, Competition } from '@/lib/hooks/useCompetitions';
+import DataTable from '@/components/crud/DataTable';
 
 export default function DriversPage() {
-  const [selectedCompetition, setSelectedCompetition] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [editingDriver, setEditingDriver] = useState<any>(null);
+  const { drivers, loading, error, deleteDriver } = useDrivers();
+  const { competitions } = useCompetitions();
+  const [competitionOptions, setCompetitionOptions] = useState<{ label: string; value: string }[]>([]);
 
-  // Función para abrir el formulario para crear un nuevo piloto
-  const handleAddDriver = () => {
-    setEditingDriver(null);
-    setIsFormOpen(true);
-  };
+  useEffect(() => {
+    // Preparar opciones para el filtro de competiciones
+    if (competitions.length > 0) {
+      const options = competitions.map((comp: Competition) => ({
+        label: comp.name,
+        value: comp.id
+      }));
+      setCompetitionOptions(options);
+    }
+  }, [competitions]);
 
-  // Función para abrir el formulario para editar un piloto existente
-  const handleEditDriver = (driver: any) => {
-    setEditingDriver(driver);
-    setIsFormOpen(true);
-  };
+  // Definir columnas para la tabla de pilotos
+  const columns = [
+    { key: 'position', label: 'Pos' },
+    { 
+      key: 'driver', 
+      label: 'Piloto',
+      render: (item: any) => (
+        <div className="flex items-center">
+          <div className="w-2 h-full mr-2" style={{ backgroundColor: item.teamColor }}></div>
+          <span>{item.driver}</span>
+        </div>
+      )
+    },
+    { key: 'nationality', label: 'Nacionalidad' },
+    { key: 'team', label: 'Equipo' },
+    { key: 'points', label: 'Puntos' },
+    { key: 'wins', label: 'Victorias' },
+    { key: 'podiums', label: 'Podios' },
+    { 
+      key: 'competitionId', 
+      label: 'Competición',
+      render: (item: any) => {
+        const competition = competitions.find(c => c.id === item.competitionId);
+        return competition ? competition.name : item.competitionId;
+      }
+    },
+  ];
 
-  // Función para cerrar el formulario
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-    setEditingDriver(null);
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-900/50 border border-red-800 rounded-md p-4 text-red-300">
+        {error}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl md:text-3xl font-bold">Pilotos</h1>
-        <button
-          onClick={handleAddDriver}
-          className="bg-[color:var(--f1-red)] hover:bg-[color:var(--f1-red)]/80 text-white py-2 px-4 rounded-md flex items-center gap-2 transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Añadir Piloto
-        </button>
-      </div>
-
-      <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1">
-            <Search placeholder="Buscar pilotos..." onSearch={setSearchQuery} />
-          </div>
-          <div className="w-full md:w-64">
-            <CompetitionFilter
-              value={selectedCompetition}
-              onChange={setSelectedCompetition}
-            />
-          </div>
-        </div>
-
-        {/* <DriversTable 
-          competitionFilter={selectedCompetition} 
-          searchQuery={searchQuery} 
-          onEdit={handleEditDriver}
-        /> */}
-      </div>
-
-      {/* {isFormOpen && (
-        // <DriverForm
-        //   driver={editingDriver}
-        //   onClose={handleCloseForm}
-        // />
-      )} */}
+    <div>
+      <DataTable
+        data={drivers}
+        columns={columns}
+        entityName="Pilotos"
+        entityPath="drivers"
+        onDelete={deleteDriver}
+        filterOptions={competitionOptions}
+        filterKey="competitionId"
+      />
     </div>
   );
 }

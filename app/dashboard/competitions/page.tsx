@@ -1,74 +1,73 @@
 'use client';
 
-import { useState } from 'react';
-// import { CompetitionForm } from '@/app/ui/competitions/competition-form';
-// import { CompetitionsTable } from '@/app/ui/competitions/competitions-table';
-// import { Search } from '@/app/ui/competitions/search';
+import { useCompetitions } from '@/lib/hooks/useCompetitions';
+import DataTable from '@/components/crud/DataTable';
 
 export default function CompetitionsPage() {
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [editingCompetition, setEditingCompetition] = useState<any>(null);
+  const { competitions, loading, error, deleteCompetition } = useCompetitions();
 
-  // Función para abrir el formulario para crear una nueva competición
-  const handleAddCompetition = () => {
-    setEditingCompetition(null);
-    setIsFormOpen(true);
-  };
+  // Definir columnas para la tabla de competiciones
+  const columns = [
+    { 
+      key: 'name', 
+      label: 'Competición',
+      render: (item: any) => (
+        <div className="flex items-center">
+          <div 
+            className="w-4 h-4 rounded-full mr-2" 
+            style={{ backgroundColor: item.color }}
+          ></div>
+          {item.name}
+        </div>
+      ) 
+    },
+    { key: 'description', label: 'Descripción' },
+    { key: 'season', label: 'Temporada' },
+    { 
+      key: 'logo', 
+      label: 'Logo',
+      render: (item: any) => (
+        item.logo ? (
+          <div className="w-8 h-8 bg-white p-1 rounded-full">
+            <img src={item.logo} alt={item.name} className="w-full h-full object-contain" />
+          </div>
+        ) : (
+          <div 
+            className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+            style={{ backgroundColor: item.color }}
+          >
+            {item.name.charAt(0)}
+          </div>
+        )
+      )
+    },
+  ];
 
-  // Función para abrir el formulario para editar una competición existente
-  const handleEditCompetition = (competition: any) => {
-    setEditingCompetition(competition);
-    setIsFormOpen(true);
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
+      </div>
+    );
+  }
 
-  // Función para cerrar el formulario
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-    setEditingCompetition(null);
-  };
+  if (error) {
+    return (
+      <div className="bg-red-900/50 border border-red-800 rounded-md p-4 text-red-300">
+        {error}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl md:text-3xl font-bold">Competiciones</h1>
-        <button
-          onClick={handleAddCompetition}
-          className="bg-[color:var(--f1-red)] hover:bg-[color:var(--f1-red)]/80 text-white py-2 px-4 rounded-md flex items-center gap-2 transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Añadir Competición
-        </button>
-      </div>
-
-      <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-        <div className="flex gap-4 mb-6">
-          <div className="flex-1">
-            {/* <Search placeholder="Buscar competiciones..." onSearch={setSearchQuery} /> */}
-          </div>
-        </div>
-
-        {/* <CompetitionsTable 
-          searchQuery={searchQuery} 
-          onEdit={handleEditCompetition}
-        /> */}
-      </div>
-
-      {/* {isFormOpen && (
-        <CompetitionForm
-          competition={editingCompetition}
-          onClose={handleCloseForm}
-        />
-      )} */}
+    <div>
+      <DataTable
+        data={competitions}
+        columns={columns}
+        entityName="Competiciones"
+        entityPath="competitions"
+        onDelete={deleteCompetition}
+      />
     </div>
   );
 }

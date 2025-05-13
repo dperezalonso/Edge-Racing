@@ -1,9 +1,24 @@
+'use client';
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 import CompetitionSelector from "./components/competition-selector";
-import { competitions } from "./data";
+import { useCompetitions } from "@/lib/hooks/useCompetitions";
 
 export default function Clasificacion() {
+  const { competitions, loading } = useCompetitions();
+  
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-8 text-center">
@@ -29,23 +44,29 @@ export default function Clasificacion() {
           </div>
           <h3 className="text-2xl font-bold mb-3">Selecciona una competición para ver su clasificación</h3>
           <p className="text-gray-400 max-w-lg mx-auto mb-8">
-            Elige entre Formula 1 o MotoGP para ver las clasificaciones actualizadas de pilotos y equipos de la temporada actual.
+            Elige entre las competiciones disponibles para ver las clasificaciones actualizadas de pilotos y equipos de la temporada actual.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-5 justify-center">
-            {competitions.map(comp => (
-              <Link 
-                key={comp.id} 
-                href={`/clasificacion/${comp.id}`} 
-                className="inline-flex items-center px-5 py-3 rounded-lg font-medium text-white transition-all hover:scale-105"
-                style={{ backgroundColor: comp.color }}
-              >
-                Ver clasificación de {comp.name}
-                <svg xmlns="http://www.w3.org/2000/svg" className="size-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            ))}
+            {competitions.length > 0 ? (
+              competitions.map(comp => (
+                <Link 
+                  key={comp.id} 
+                  href={`/clasificacion/${comp.id}`} 
+                  className="inline-flex items-center px-5 py-3 rounded-lg font-medium text-white transition-all hover:scale-105"
+                  style={{ backgroundColor: comp.color }}
+                >
+                  Ver clasificación de {comp.name}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="size-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              ))
+            ) : (
+              <div className="text-gray-400 text-center">
+                No hay competiciones disponibles. Añade competiciones desde el dashboard.
+              </div>
+            )}
           </div>
         </div>
         
@@ -81,7 +102,7 @@ export default function Clasificacion() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <h4 className="text-lg font-bold mb-2">Temporada 2024</h4>
+            <h4 className="text-lg font-bold mb-2">Temporada 2025</h4>
             <p className="text-gray-400 text-sm">
               Clasificaciones correspondientes a la temporada actual en curso.
             </p>
