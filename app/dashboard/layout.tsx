@@ -39,7 +39,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-10 relative">
+        <main className="flex-1 overflow-y-auto p-6 md:p-6 relative">
           {/* Decorative racing stripe */}
           <div className="absolute top-0 right-0 h-1 w-1/3 racing-gradient"></div>
           {children}

@@ -81,7 +81,7 @@ export default function Dashboard() {
   const totalCountries = [...new Set(topTeams.map(team => team.country))].length;
 
   return (
-    <section className="space-y-2">
+    <section className="space-y-4">
      
 
       {/* Resumen en tarjetas */}
