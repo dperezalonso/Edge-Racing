@@ -9,6 +9,7 @@ export default function CompetitionSelector({
   competitions
 }: {
   competitions: Competition[];
+    baseRoute: string; 
 }) {
   const pathname = usePathname();
   const isRootPath = pathname === "/clasificacion";

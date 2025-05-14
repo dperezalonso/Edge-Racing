@@ -1,3 +1,4 @@
+// app/(public)/clasificacion/[competition]/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,18 +9,20 @@ import CompetitionSelector from "../components/competition-selector";
 import PilotClassification from "../components/pilot-classification";
 import TeamClassification from "../components/team-classification";
 import ViewTabs from "../components/view-tabs";
-import { useCompetitions } from "@/lib/hooks/useCompetitions";
-import { useDrivers } from "@/lib/hooks/useDrivers";
-import { useTeams } from "@/lib/hooks/useTeams";
+import { useApiData } from "@/lib/hooks/useApiIntegration";
 
 export default function CompetitionPage() {
   const params = useParams();
-  const competitionId = params.competition as string;
+  const competitionId = params.competition ? Number(params.competition) : 0;
   const [activeView, setActiveView] = useState<"drivers" | "teams">("drivers");
   
-  const { competitions, loading: competitionsLoading } = useCompetitions();
-  const { drivers, getDriversByCompetition, loading: driversLoading } = useDrivers();
-  const { teams, getTeamsByCompetition, loading: teamsLoading } = useTeams();
+  const { 
+    competitions, 
+    getDriversByCompetition, 
+    getTeamsByCompetition, 
+    getCompetitionById,
+    loading
+  } = useApiData();
   
   const [filteredDrivers, setFilteredDrivers] = useState<any[]>([]);
   const [filteredTeams, setFilteredTeams] = useState<any[]>([]);
@@ -27,34 +30,30 @@ export default function CompetitionPage() {
   
   // Obtener la competición seleccionada y filtrar pilotos/equipos
   useEffect(() => {
-    if (!competitionsLoading && competitions.length > 0) {
-      const selectedCompetition = competitions.find(comp => comp.id === competitionId);
-      setCompetition(selectedCompetition || null);
+    if (!loading && competitionId) {
+      // Obtener la competición seleccionada
+      const selectedCompetition = getCompetitionById(competitionId);
+      setCompetition(selectedCompetition);
+      
+      // Filtrar pilotos y equipos para esta competición
+      if (selectedCompetition) {
+        const driversForCompetition = getDriversByCompetition(competitionId);
+        const teamsForCompetition = getTeamsByCompetition(competitionId);
+        
+        console.log('Datos filtrados:', {
+          competition: selectedCompetition,
+          drivers: driversForCompetition,
+          teams: teamsForCompetition
+        });
+        
+        setFilteredDrivers(driversForCompetition);
+        setFilteredTeams(teamsForCompetition);
+      }
     }
-    
-    if (!driversLoading && !competitionsLoading && competitions.length > 0) {
-      const driversForCompetition = getDriversByCompetition(competitionId);
-      setFilteredDrivers(driversForCompetition);
-    }
-    
-    if (!teamsLoading && !competitionsLoading && competitions.length > 0) {
-      const teamsForCompetition = getTeamsByCompetition(competitionId);
-      setFilteredTeams(teamsForCompetition);
-    }
-  }, [
-    competitionId, 
-    competitions, 
-    drivers, 
-    teams, 
-    competitionsLoading, 
-    driversLoading, 
-    teamsLoading,
-    getDriversByCompetition,
-    getTeamsByCompetition
-  ]);
+  }, [competitionId, loading, getCompetitionById, getDriversByCompetition, getTeamsByCompetition]);
   
   // Mostrar indicador de carga
-  if (competitionsLoading || driversLoading || teamsLoading) {
+  if (loading) {
     return (
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center items-center h-32">
@@ -86,6 +85,13 @@ export default function CompetitionPage() {
       </div>
     );
   }
+  
+  // Chequear que los datos están cargados correctamente
+  console.log('Renderizando competición:', {
+    competition,
+    filteredDrivers,
+    filteredTeams
+  });
   
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -142,18 +148,18 @@ export default function CompetitionPage() {
 
         <ViewTabs 
           onTabChange={setActiveView}
-          competitionId={competitionId}
+          competitionId={String(competitionId)}
         />
         
         {activeView === "drivers" ? (
           <PilotClassification 
             drivers={filteredDrivers} 
-            competitionId={competitionId} 
+            competitionId={String(competitionId)} 
           />
         ) : (
           <TeamClassification 
             teams={filteredTeams} 
-            competitionId={competitionId} 
+            competitionId={String(competitionId)} 
           />
         )}
       </div>

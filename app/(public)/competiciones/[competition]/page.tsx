@@ -3,14 +3,45 @@
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import CompetitionSelector from "../../clasificacion/components/competition-selector";
-import { competitions, f1Teams, motogpTeams, f1Drivers, motogpRiders } from "../../clasificacion/data";
+import { useCompetitions } from "@/lib/hooks/useCompetitions";
+import { useDrivers } from "@/lib/hooks/useDrivers";
+import { useTeams } from "@/lib/hooks/useTeams";
 
 export default function CompetitionDetailPage() {
     const params = useParams();
     const competitionId = params.competition as string;
 
-    const competition = competitions.find((comp) => comp.id === competitionId);
+    const { competitions, loading: competitionsLoading } = useCompetitions();
+    const { drivers, getDriversByCompetition, loading: driversLoading } = useDrivers();
+    const { teams, loading: teamsLoading } = useTeams();
+    
+    // Estado para la competición actual
+    const [competition, setCompetition] = useState<any>(null);
+    
+    // Obtener la competición actual
+    useEffect(() => {
+        if (!competitionsLoading && competitions.length > 0) {
+            const foundCompetition = competitions.find(comp => comp.id === competitionId);
+            setCompetition(foundCompetition || null);
+        }
+    }, [competitionId, competitions, competitionsLoading]);
+    
+    // Obtener pilotos y equipos filtrados por competición
+    const competitionDrivers = !driversLoading ? getDriversByCompetition(competitionId) : [];
+    const competitionTeams = !teamsLoading ? teams.filter(team => team.competition_id === competitionId) : [];
+    
+    // Estado de carga
+    if (competitionsLoading || driversLoading || teamsLoading) {
+        return (
+            <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-center items-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
+                </div>
+            </div>
+        );
+    }
 
     if (!competition) {
         return (
@@ -45,9 +76,8 @@ export default function CompetitionDetailPage() {
         );
     }
 
-    // Determinar qué datos mostrar según la competición
-    const teams = competitionId === "formula1" ? f1Teams : motogpTeams;
-    const drivers = competitionId === "formula1" ? f1Drivers : motogpRiders;
+    // Valores por defecto para competitionId
+    const isF1 = competitionId === "formula1";
 
     return (
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -71,10 +101,10 @@ export default function CompetitionDetailPage() {
             <div className="bg-[color:var(--racing-gray)]/30 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
                 <div className="mb-8 flex items-center justify-between">
                     <div className="flex items-center">
-                        {competition.logo ? (
+                        {competition.logo || competition.image ? (
                             <div className="mr-4 size-12 bg-white rounded-full p-1">
                                 <Image
-                                    src={competition.logo}
+                                    src={competition.logo || competition.image}
                                     alt={competition.name}
                                     width={48}
                                     height={48}
@@ -100,7 +130,7 @@ export default function CompetitionDetailPage() {
                             className="inline-block px-3 py-1 text-sm font-medium rounded-full"
                             style={{ backgroundColor: competition.color }}
                         >
-                            Temporada {competition.season}
+                            Temporada {competition.season || new Date().getFullYear()}
                         </span>
                     </div>
                 </div>
@@ -109,7 +139,7 @@ export default function CompetitionDetailPage() {
                 <div className="mb-10 p-6 bg-gradient-to-r from-[color:var(--racing-black)]/70 to-[color:var(--racing-gray)]/30 rounded-lg border border-gray-800">
                     <h3 className="text-xl font-bold mb-4">Sobre {competition.name}</h3>
                     <p className="text-gray-300 mb-6">
-                        {competitionId === "formula1"
+                        {isF1
                             ? "La Fórmula 1 es la categoría más prestigiosa del automovilismo internacional. Combina la tecnología más avanzada, estrategia y talento de los mejores pilotos del mundo en circuitos alrededor del planeta."
                             : "MotoGP representa la élite del motociclismo de velocidad, donde los mejores pilotos del mundo compiten en prototipos de alta tecnología que pueden superar los 350 km/h, demostrando habilidad, valentía y precisión."}
                     </p>
@@ -117,21 +147,21 @@ export default function CompetitionDetailPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                         <div className="bg-[color:var(--racing-black)]/70 p-4 rounded-md">
                             <div className="text-2xl font-bold">
-                                {competitionId === "formula1" ? "24" : "20"}
+                                {isF1 ? "24" : "20"}
                             </div>
                             <div className="text-sm text-gray-400">Grandes Premios</div>
                         </div>
                         <div className="bg-[color:var(--racing-black)]/70 p-4 rounded-md">
-                            <div className="text-2xl font-bold">{teams.length}</div>
+                            <div className="text-2xl font-bold">{competitionTeams.length}</div>
                             <div className="text-sm text-gray-400">Equipos</div>
                         </div>
                         <div className="bg-[color:var(--racing-black)]/70 p-4 rounded-md">
-                            <div className="text-2xl font-bold">{drivers.length}</div>
+                            <div className="text-2xl font-bold">{competitionDrivers.length}</div>
                             <div className="text-sm text-gray-400">Pilotos</div>
                         </div>
                         <div className="bg-[color:var(--racing-black)]/70 p-4 rounded-md">
                             <div className="text-2xl font-bold">
-                                {competitionId === "formula1" ? "1950" : "1949"}
+                                {isF1 ? "1950" : "1949"}
                             </div>
                             <div className="text-sm text-gray-400">Año de fundación</div>
                         </div>
@@ -148,14 +178,14 @@ export default function CompetitionDetailPage() {
                             Equipos participantes
                         </h3>
                         <p className="text-gray-400 text-sm mt-1">
-                            {teams.length} equipos compiten esta temporada
+                            {competitionTeams.length} equipos compiten esta temporada
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                        {teams.slice(0, 6).map((team) => (
+                        {competitionTeams.slice(0, 6).map((team) => (
                             <div
-                                key={team.team}
+                                key={team.id}
                                 className="flex items-center p-4 rounded-lg bg-[color:var(--racing-black)]/50 hover:bg-[color:var(--racing-black)]/70 border border-gray-800 transition-colors"
                             >
                                 <div
@@ -163,9 +193,9 @@ export default function CompetitionDetailPage() {
                                     style={{ backgroundColor: team.color }}
                                 ></div>
                                 <div>
-                                    <div className="font-bold text-white">{team.team}</div>
+                                    <div className="font-bold text-white">{team.name}</div>
                                     <div className="text-sm text-gray-400">
-                                        {team.points} puntos • {team.wins} victorias
+                                        {team.points} puntos • {team.wins || 0} victorias
                                     </div>
                                 </div>
                                 <div className="ml-auto">
@@ -173,27 +203,25 @@ export default function CompetitionDetailPage() {
                                         className="size-8 rounded-full flex items-center justify-center font-bold text-sm"
                                         style={{
                                             backgroundColor:
-                                                team.position <= 3
+                                                (team.position || 0) <= 3
                                                     ? team.position === 1
                                                         ? "var(--accent-yellow)"
                                                         : team.position === 2
                                                             ? "var(--racing-silver)"
                                                             : "#CD7F32"
                                                     : "transparent",
-                                            color: team.position <= 3 ? "black" : "white",
+                                            color: (team.position || 0) <= 3 ? "black" : "white",
                                         }}
                                     >
-                                        {team.position}
+                                        {team.position || "-"}
                                     </div>
                                 </div>
                             </div>
                         ))}
                     </div>
-
-               
                 </div>
 
-                {/* Pilotos - NUEVA SECCIÓN */}
+                {/* Pilotos - SECCIÓN ACTUALIZADA */}
                 <div className="mb-12">
                     <div className="mb-4">
                         <h3
@@ -203,51 +231,72 @@ export default function CompetitionDetailPage() {
                             Pilotos destacados
                         </h3>
                         <p className="text-gray-400 text-sm mt-1">
-                            {drivers.length} pilotos compiten esta temporada
+                            {competitionDrivers.length} pilotos compiten esta temporada
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                        {drivers.slice(0, 6).map((driver) => (
-                            <div
-                                key={driver.driver}
-                                className="flex items-center p-4 rounded-lg bg-[color:var(--racing-black)]/50 hover:bg-[color:var(--racing-black)]/70 border border-gray-800 transition-colors"
-                            >
-                                <div
-                                    className="mr-3 size-10 rounded-full flex items-center justify-center text-center text-xs font-bold"
-                                    style={{
-                                        backgroundColor: driver.teamColor,
-                                        color: "#fff"
-                                    }}
-                                >
-                                    {driver.nationality}
-                                </div>
-                                <div>
-                                    <div className="font-bold text-white">{driver.driver}</div>
-                                    <div className="text-sm text-gray-400">
-                                        {driver.team} • {driver.points} pts • {driver.wins} victorias
-                                    </div>
-                                </div>
-                                <div className="ml-auto">
+                        {competitionDrivers.length > 0 ? (
+                            competitionDrivers.slice(0, 6).map((driver) => {
+                                // Buscar el equipo correspondiente al piloto
+                                const driverTeam = teams.find(team => team.id === driver.team_id);
+                                const teamColor = driverTeam?.color || "#CCCCCC";
+                                const teamName = driverTeam?.name || "Equipo desconocido";
+                                
+                                // Determinar el nombre completo del piloto
+                                const fullName = driver.first_name && driver.last_name 
+                                    ? `${driver.first_name} ${driver.last_name}`
+                                    : "Piloto sin nombre";
+                                
+                                // Determinar nacionalidad/país
+                                const nationality = driver.nationality || driver.birth_country || "---";
+                                
+                                return (
                                     <div
-                                        className="size-8 rounded-full flex items-center justify-center font-bold text-sm"
-                                        style={{
-                                            backgroundColor:
-                                                driver.position <= 3
-                                                    ? driver.position === 1
-                                                        ? "var(--accent-yellow)"
-                                                        : driver.position === 2
-                                                            ? "var(--racing-silver)"
-                                                            : "#CD7F32"
-                                                    : "transparent",
-                                            color: driver.position <= 3 ? "black" : "white",
-                                        }}
+                                        key={driver.id}
+                                        className="flex items-center p-4 rounded-lg bg-[color:var(--racing-black)]/50 hover:bg-[color:var(--racing-black)]/70 border border-gray-800 transition-colors"
                                     >
-                                        {driver.position}
+                                        <div
+                                            className="mr-3 size-10 rounded-full flex items-center justify-center text-center text-xs font-bold"
+                                            style={{
+                                                backgroundColor: teamColor,
+                                                color: "#fff"
+                                            }}
+                                        >
+                                            {nationality}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-white">{fullName}</div>
+                                            <div className="text-sm text-gray-400">
+                                                {teamName} • {driver.points} pts • {driver.wins || 0} victorias
+                                            </div>
+                                        </div>
+                                        <div className="ml-auto">
+                                            <div
+                                                className="size-8 rounded-full flex items-center justify-center font-bold text-sm"
+                                                style={{
+                                                    backgroundColor:
+                                                        (driver.position || 0) <= 3
+                                                            ? driver.position === 1
+                                                                ? "var(--accent-yellow)"
+                                                                : driver.position === 2
+                                                                    ? "var(--racing-silver)"
+                                                                    : "#CD7F32"
+                                                            : "transparent",
+                                                    color: (driver.position || 0) <= 3 ? "black" : "white",
+                                                }}
+                                            >
+                                                {driver.position || "-"}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                );
+                            })
+                        ) : (
+                            <div className="col-span-2 text-gray-400 text-center py-4 bg-gray-800/30 rounded-md">
+                                No hay pilotos registrados en esta competición.
                             </div>
-                        ))}
+                        )}
                     </div>
 
                     <Link
@@ -269,10 +318,7 @@ export default function CompetitionDetailPage() {
                         </svg>
                     </Link>
                 </div>
-
-               
             </div>
         </div>
-
     );
 }

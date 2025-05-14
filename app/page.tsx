@@ -1,5 +1,5 @@
 import Link from "next/link";
-
+fetch('http://localhost:8000/api/saludo').then(r => r.json()).then(console.log)
 export default function Home() {
   return (
     <section className="relative flex flex-col items-center justify-center h-screen w-full overflow-hidden">

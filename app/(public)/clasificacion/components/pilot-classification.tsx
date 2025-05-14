@@ -1,17 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-type Driver = {
-  position: number;
-  driver: string;
-  nationality: string;
-  team: string;
-  points: number;
-  wins: number;
-  podiums: number;
-  teamColor: string;
-};
+import { Driver } from "@/types/models";
 
 export default function PilotClassification({
   drivers,
@@ -22,11 +12,25 @@ export default function PilotClassification({
 }) {
   const [sort, setSort] = useState<"position" | "points" | "wins">("position");
   
-  // Ordenar conductores según el criterio seleccionado
-  const sortedDrivers = [...drivers].sort((a, b) => {
-    if (sort === "position") return a.position - b.position;
-    if (sort === "points") return b.points - a.points;
-    if (sort === "wins") return b.wins - a.wins;
+  // Asegurarse de que todos los pilotos tienen los campos necesarios
+  const prepareDrivers = (driversData: Driver[]) => {
+    return driversData.map(driver => ({
+      ...driver,
+      // Para UI, aseguramos que existe el campo "driver" combinando first_name y last_name
+      driver:  `${driver.first_name} ${driver.last_name}`,
+      // Asegurar otros campos necesarios para UI
+      nationality: driver.nationality || driver.birth_country,
+      position: driver.position || 0,
+      wins: driver.wins || 0,
+      podiums: driver.podiums || 0,
+    }));
+  };
+  
+  // Ordenar pilotos según el criterio seleccionado
+  const sortedDrivers = [...prepareDrivers(drivers)].sort((a, b) => {
+    if (sort === "position") return (a.position || 0) - (b.position || 0);
+    if (sort === "points") return (b.points - a.points);
+    if (sort === "wins") return (b.wins || 0) - (a.wins || 0);
     return 0;
   });
   
@@ -84,20 +88,22 @@ export default function PilotClassification({
           <tbody className="divide-y divide-gray-800">
             {sortedDrivers.map((driver) => (
               <tr 
-                key={driver.driver}
+                key={driver.id}
                 className="bg-gray-900/50 hover:bg-gray-800/70 transition-colors"
               >
                 <td className="px-4 py-3">
                   <div className={`size-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                    driver.position <= 3 
-                      ? `${positionColorClass(driver.position)} text-black` 
+                    (driver.position || 0) <= 3 
+                      ? `${positionColorClass(driver.position || 0)} text-black` 
                       : "bg-gray-800"
                   }`}>
-                    {driver.position}
+                    {driver.position || "-"}
                   </div>
                 </td>
-                <td className="px-4 py-3 font-medium">{driver.driver}</td>
-                <td className="px-4 py-3">{driver.nationality}</td>
+                <td className="px-4 py-3 font-medium">
+                  {`${driver.first_name} ${driver.last_name}`}
+                </td>
+                <td className="px-4 py-3">{driver.nationality || driver.birth_country}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center">
                     <div 
@@ -108,8 +114,8 @@ export default function PilotClassification({
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right font-bold">{driver.points}</td>
-                <td className="px-4 py-3 text-right">{driver.wins}</td>
-                <td className="px-4 py-3 text-right">{driver.podiums}</td>
+                <td className="px-4 py-3 text-right">{driver.wins || 0}</td>
+                <td className="px-4 py-3 text-right">{driver.podiums || 0}</td>
               </tr>
             ))}
           </tbody>

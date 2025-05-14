@@ -13,7 +13,7 @@ export default function Competiciones() {
 
   // Estado para controlar la visualización de detalles
   const [expandedCompetition, setExpandedCompetition] = useState<string | null>(null);
-  
+
   // Función para alternar la visualización de detalles
   const toggleDetails = (competitionId: string) => {
     if (expandedCompetition === competitionId) {
@@ -22,7 +22,7 @@ export default function Competiciones() {
       setExpandedCompetition(competitionId);
     }
   };
-  
+
   // Estado de carga
   if (competitionsLoading || driversLoading || teamsLoading) {
     return (
@@ -51,9 +51,9 @@ export default function Competiciones() {
             const competitionDrivers = getDriversByCompetition(competition.id);
             const competitionTeams = getTeamsByCompetition(competition.id);
             const isExpanded = expandedCompetition === competition.id;
-            
+
             return (
-              <div 
+              <div
                 key={competition.id}
                 className="bg-[color:var(--racing-gray)]/30 backdrop-blur-sm rounded-lg overflow-hidden border border-gray-800 transition-all"
               >
@@ -62,14 +62,14 @@ export default function Competiciones() {
                     <div className="flex items-center gap-4">
                       {competition.logo ? (
                         <div className="size-14 bg-white rounded-full p-1 flex-shrink-0">
-                          <img 
-                            src={competition.logo} 
-                            alt={competition.name} 
+                          <img
+                            src={competition.logo}
+                            alt={competition.name}
                             className="w-full h-full object-contain"
                           />
                         </div>
                       ) : (
-                        <div 
+                        <div
                           className="size-14 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0"
                           style={{ backgroundColor: competition.color }}
                         >
@@ -79,7 +79,7 @@ export default function Competiciones() {
                       <div>
                         <h2 className="text-xl font-bold">{competition.name}</h2>
                         <div className="mt-1">
-                          <span 
+                          <span
                             className="inline-block px-2 py-0.5 text-xs font-medium rounded-full"
                             style={{ backgroundColor: competition.color }}
                           >
@@ -88,9 +88,9 @@ export default function Competiciones() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-3">
-                      <Link 
+                      <Link
                         href={`/clasificacion/${competition.id}`}
                         className="py-2 px-4 rounded-md bg-[color:var(--f1-red)]/20 text-[color:var(--f1-red)] border border-[color:var(--f1-red)]/30 hover:bg-[color:var(--f1-red)]/30 transition-colors text-sm"
                       >
@@ -100,11 +100,11 @@ export default function Competiciones() {
                         onClick={() => toggleDetails(competition.id)}
                         className="p-2 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors"
                       >
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          className={`h-5 w-5 transition-transform ${isExpanded ? 'transform rotate-180' : ''}`} 
-                          fill="none" 
-                          viewBox="0 0 24 24" 
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className={`h-5 w-5 transition-transform ${isExpanded ? 'transform rotate-180' : ''}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
                           stroke="currentColor"
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -112,9 +112,9 @@ export default function Competiciones() {
                       </button>
                     </div>
                   </div>
-                  
+
                   <p className="text-gray-300 my-4 text-sm">{competition.description}</p>
-                  
+
                   {isExpanded && (
                     <div className="mt-6 space-y-6">
                       {/* Sección de pilotos */}
@@ -125,21 +125,31 @@ export default function Competiciones() {
                           </svg>
                           Pilotos
                         </h3>
-                        
+
                         {competitionDrivers.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {competitionDrivers.map((driver) => (
-                              <div key={driver.id} className="bg-gray-800/50 border border-gray-700 rounded-md p-3 flex items-center gap-3">
-                                <div 
-                                  className="w-2 h-10 rounded-sm"
-                                  style={{ backgroundColor: driver.teamColor }}
-                                ></div>
-                                <div>
-                                  <div className="font-medium">{driver.driver}</div>
-                                  <div className="text-sm text-gray-400">{driver.team} • {driver.nationality}</div>
+                            {competitionDrivers.map((driver) => {
+                              // Buscar el equipo correspondiente usando team_id
+                              const driverTeam = teams.find(team => team.id === driver.team_id);
+
+                              // Obtener color y nombre del equipo (o valores por defecto si no se encuentra)
+                              const teamColor = driverTeam?.color || "#CCCCCC";
+                              const teamName = driverTeam?.name || "Equipo desconocido";
+
+                              return (
+                                <div key={driver.id} className="bg-gray-800/50 border border-gray-700 rounded-md p-3 flex items-center gap-3">
+                                  <div
+                                    className="w-2 h-15 rounded-sm"
+                                    style={{ backgroundColor: teamColor }}
+                                  ></div>
+                                  <div>
+                                    <div className="font-medium">{driver.first_name} {driver.last_name}</div>
+                                    <div className="text-sm text-gray-400">{teamName} </div>
+                                    <div className="text-sm text-gray-400"> {driver.birth_country}</div>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         ) : (
                           <div className="text-gray-400 text-center py-4 bg-gray-800/30 rounded-md">
@@ -147,7 +157,7 @@ export default function Competiciones() {
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Sección de equipos */}
                       <div>
                         <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -156,18 +166,18 @@ export default function Competiciones() {
                           </svg>
                           Equipos
                         </h3>
-                        
+
                         {competitionTeams.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {competitionTeams.map((team) => (
                               <div key={team.id} className="bg-gray-800/50 border border-gray-700 rounded-md p-3 flex items-center gap-3">
-                                <div 
+                                <div
                                   className="w-10 h-10 rounded-full flex items-center justify-center"
                                   style={{ backgroundColor: team.color }}
                                 >
-                                  {team.team.charAt(0)}
+                                  {team.name.charAt(0)}
                                 </div>
-                                <div className="font-medium">{team.team}</div>
+                                <div className="font-medium">{team.name}</div>
                               </div>
                             ))}
                           </div>
@@ -177,9 +187,9 @@ export default function Competiciones() {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="pt-4 flex justify-center">
-                        <Link 
+                        <Link
                           href={`/clasificacion/${competition.id}`}
                           className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
                         >
@@ -206,8 +216,8 @@ export default function Competiciones() {
             <p className="text-gray-400 max-w-lg mx-auto mb-6">
               Actualmente no hay competiciones disponibles en el sistema. Las competiciones se añaden desde el panel de administración.
             </p>
-            <Link 
-              href="/dashboard/competitions/add" 
+            <Link
+              href="/dashboard/competitions/add"
               className="inline-flex items-center px-5 py-2 rounded-md bg-[color:var(--f1-red)] text-white hover:bg-[color:var(--f1-red)]/90 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

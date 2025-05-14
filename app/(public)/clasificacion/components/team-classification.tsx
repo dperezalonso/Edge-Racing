@@ -1,15 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-type Team = {
-  position: number;
-  team: string;
-  points: number;
-  wins: number;
-  podiums: number;
-  color: string;
-};
+import { Team } from "@/types/models";
 
 export default function TeamClassification({
   teams,
@@ -20,11 +12,23 @@ export default function TeamClassification({
 }) {
   const [sort, setSort] = useState<"position" | "points" | "wins">("position");
   
+  // Preparar equipos para la UI
+  const prepareTeams = (teamsData: Team[]) => {
+    return teamsData.map(team => ({
+      ...team,
+      // Para UI, garantizar que existe el campo "team" para compatibilidad
+      team: team.name,
+      position: team.position || 0,
+      wins: team.wins || 0,
+      podiums: team.podiums || 0,
+    }));
+  };
+  
   // Ordenar equipos según el criterio seleccionado
-  const sortedTeams = [...teams].sort((a, b) => {
-    if (sort === "position") return a.position - b.position;
+  const sortedTeams = [...prepareTeams(teams)].sort((a, b) => {
+    if (sort === "position") return (a.position || 0) - (b.position || 0);
     if (sort === "points") return b.points - a.points;
-    if (sort === "wins") return b.wins - a.wins;
+    if (sort === "wins") return (b.wins || 0) - (a.wins || 0);
     return 0;
   });
   
@@ -80,16 +84,16 @@ export default function TeamClassification({
           <tbody className="divide-y divide-gray-800">
             {sortedTeams.map((team) => (
               <tr 
-                key={team.team}
+                key={team.id}
                 className="bg-gray-900/50 hover:bg-gray-800/70 transition-colors"
               >
                 <td className="px-4 py-3">
                   <div className={`size-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                    team.position <= 3 
-                      ? `${positionColorClass(team.position)} text-black` 
+                    (team.position || 0) <= 3 
+                      ? `${positionColorClass(team.position || 0)} text-black` 
                       : "bg-gray-800"
                   }`}>
-                    {team.position}
+                    {team.position || "-"}
                   </div>
                 </td>
                 <td className="px-4 py-3">
@@ -98,12 +102,12 @@ export default function TeamClassification({
                       className="size-4 rounded-full mr-3"
                       style={{ backgroundColor: team.color }}
                     ></div>
-                    <span className="font-medium">{team.team}</span>
+                    <span className="font-medium">{team.name}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right font-bold">{team.points}</td>
-                <td className="px-4 py-3 text-right">{team.wins}</td>
-                <td className="px-4 py-3 text-right">{team.podiums}</td>
+                <td className="px-4 py-3 text-right">{team.wins || 0}</td>
+                <td className="px-4 py-3 text-right">{team.podiums || 0}</td>
               </tr>
             ))}
           </tbody>

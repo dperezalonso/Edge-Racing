@@ -2,39 +2,38 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { Competition } from '../../types/models';
+import apiClient from '@/services/api';
+import { API_ENDPOINTS } from '@/config/api';
 
-// Define la interfaz para Competition
-export interface Competition {
-  id: string;
-  name: string;
-  description: string;
-  season: string;
-  logo?: string;
-  color: string;
-}
+// Key para almacenamiento en localStorage
+const STORAGE_KEY = 'edge_racing_competitions';
 
-// Mock data inicial (simulación de una base de datos)
+// Mock data inicial (simulación para desarrollo)
 const initialCompetitions: Competition[] = [
   {
     id: "formula1",
     name: "Formula 1",
-    logo: "/images/f1-logo.png",
     description: "Campeonato Mundial de Formula 1",
+    image: "/images/f1-logo.png",
+    status: "active",
+    // Campos personalizados para UI
+    logo: "/images/f1-logo.png",
     season: "2025",
     color: "var(--f1-red)"
   },
   {
     id: "motogp",
     name: "MotoGP",
-    logo: "/images/motogp-logo.png",
     description: "Campeonato Mundial de Motociclismo",
+    image: "/images/motogp-logo.png",
+    status: "active",
+    // Campos personalizados para UI
+    logo: "/images/motogp-logo.png",
     season: "2025",
     color: "var(--motogp-blue)"
   }
 ];
-
-// Key para almacenamiento en localStorage
-const STORAGE_KEY = 'edge_racing_competitions';
 
 export function useCompetitions() {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -43,39 +42,60 @@ export function useCompetitions() {
   const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
-  // Cargar datos de localStorage o usar datos iniciales
+  // Cargar datos desde la API o usar fallback
   useEffect(() => {
-    // Evitar múltiples inicializaciones
     if (!isInitialized) {
-      try {
-        // Intenta obtener los datos de localStorage
-        const storedData = localStorage.getItem(STORAGE_KEY);
-        console.log("Datos almacenados en localStorage (competiciones):", storedData);
-        
-        if (storedData) {
-          const parsedData = JSON.parse(storedData);
-          console.log("Datos parseados de localStorage (competiciones):", parsedData);
-          setCompetitions(parsedData);
-        } else {
-          console.log("No hay datos en localStorage, usando iniciales (competiciones):", initialCompetitions);
-          setCompetitions(initialCompetitions);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(initialCompetitions));
+      const fetchCompetitions = async () => {
+        try {
+          // Intentar obtener datos de la API
+          const response = await apiClient.get(API_ENDPOINTS.competitions);
+          console.log("Datos de competiciones de la API:", response.data);
+          
+          // Transformar los datos para mantener compatibilidad con UI
+          const formattedCompetitions = response.data.map((comp: any) => ({
+            ...comp,
+            // Mapear campos para mantener compatibilidad con la UI
+            logo: comp.image, 
+            color: comp.id === "formula1" ? "var(--f1-red)" : 
+                  comp.id === "motogp" ? "var(--motogp-blue)" : 
+                  "#" + Math.floor(Math.random()*16777215).toString(16), // Color aleatorio para otras competiciones
+            season: comp.season || new Date().getFullYear().toString(),
+          }));
+          
+          setCompetitions(formattedCompetitions);
+        } catch (error) {
+          console.error("Error al cargar competiciones desde API:", error);
+          
+          // Fallback a localStorage en desarrollo
+          try {
+            const storedData = localStorage.getItem(STORAGE_KEY);
+            
+            if (storedData) {
+              console.log("Usando datos de competiciones de localStorage como fallback");
+              setCompetitions(JSON.parse(storedData));
+            } else {
+              console.log("Usando datos mock de competiciones como fallback");
+              setCompetitions(initialCompetitions);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(initialCompetitions));
+            }
+          } catch (localError) {
+            console.error("Error completo al cargar competiciones:", localError);
+            setError('Error al cargar las competiciones');
+            setCompetitions(initialCompetitions);
+          }
+        } finally {
+          setLoading(false);
+          setIsInitialized(true);
         }
-      } catch (error) {
-        console.error("Error al cargar competiciones de localStorage:", error);
-        setError('Error al cargar las competiciones');
-        setCompetitions(initialCompetitions);
-      } finally {
-        setLoading(false);
-        setIsInitialized(true);
-      }
+      };
+
+      fetchCompetitions();
     }
   }, [isInitialized]);
 
   // Guardar datos en localStorage cuando cambian
   useEffect(() => {
-    if (isInitialized && !loading) {
-      console.log("Guardando competiciones en localStorage:", competitions);
+    if (isInitialized && !loading && process.env.NODE_ENV === 'development') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(competitions));
     }
   }, [competitions, loading, isInitialized]);
@@ -83,7 +103,6 @@ export function useCompetitions() {
   // Obtener una competición por ID
   const getCompetitionById = useCallback((id: string) => {
     console.log("Buscando competición con ID:", id);
-    console.log("Lista de competiciones disponible:", competitions);
     
     const competition = competitions.find(competition => competition.id === id);
     console.log("Competición encontrada:", competition);
@@ -94,16 +113,13 @@ export function useCompetitions() {
   // Añadir una nueva competición
   const addCompetition = useCallback(async (competition: Omit<Competition, 'id'>) => {
     try {
-      // Generar un ID único basado en el nombre
-      const id = competition.name
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '');
+      // Enviar a la API
+      const response = await apiClient.post(API_ENDPOINTS.competitions, competition);
+      const newCompetition = response.data;
       
-      const newCompetition = {
-        ...competition,
-        id
-      };
+      // Asegurar compatibilidad UI
+      newCompetition.logo = newCompetition.image;
+      newCompetition.season = newCompetition.season || new Date().getFullYear().toString();
       
       setCompetitions(prevCompetitions => [...prevCompetitions, newCompetition]);
       console.log("Competición añadida:", newCompetition);
@@ -119,29 +135,24 @@ export function useCompetitions() {
   // Actualizar una competición existente
   const updateCompetition = useCallback(async (id: string, updatedData: Partial<Competition>) => {
     try {
-      console.log("Actualizando competición con ID:", id);
-      console.log("Datos de actualización:", updatedData);
+      // Si hay campos personalizados UI, mapearlos a campos de la BD
+      const apiData = { ...updatedData };
+      if (apiData.logo) {
+        apiData.image = apiData.logo;
+        delete apiData.logo;
+      }
       
-      let updatedCompetition: Competition | null = null;
+      // Enviar a la API
+      const response = await apiClient.put(`${API_ENDPOINTS.competitions}/${id}`, apiData);
+      const updatedCompetition = response.data;
+      
+      // Asegurar compatibilidad UI en el estado
+      updatedCompetition.logo = updatedCompetition.image;
       
       setCompetitions(prevCompetitions => {
-        const index = prevCompetitions.findIndex(comp => comp.id === id);
-        console.log("Índice de la competición:", index);
-        
-        if (index === -1) {
-          console.error("Competición no encontrada para actualizar");
-          throw new Error('Competición no encontrada');
-        }
-        
-        const updatedCompetitions = [...prevCompetitions];
-        updatedCompetitions[index] = {
-          ...updatedCompetitions[index],
-          ...updatedData
-        };
-        
-        updatedCompetition = updatedCompetitions[index];
-        console.log("Array de competiciones actualizado:", updatedCompetitions);
-        return updatedCompetitions;
+        return prevCompetitions.map(comp => 
+          comp.id === id ? { ...comp, ...updatedCompetition } : comp
+        );
       });
       
       router.refresh();
@@ -157,10 +168,11 @@ export function useCompetitions() {
   // Eliminar una competición
   const deleteCompetition = useCallback(async (id: string) => {
     try {
-      console.log("Eliminando competición con ID:", id);
+      // Enviar a la API
+      await apiClient.delete(`${API_ENDPOINTS.competitions}/${id}`);
+      
       setCompetitions(prevCompetitions => {
         const filteredCompetitions = prevCompetitions.filter(comp => comp.id !== id);
-        console.log("Competiciones después de eliminar:", filteredCompetitions);
         return filteredCompetitions;
       });
       router.refresh();
@@ -181,3 +193,5 @@ export function useCompetitions() {
     deleteCompetition
   };
 }
+
+export { Competition };

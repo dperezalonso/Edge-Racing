@@ -2,99 +2,56 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { Driver } from '../../types/models';
+import apiClient from '@/services/api';
+import { API_ENDPOINTS } from '@/config/api';
 
-// Define la interfaz para Driver
-export interface Driver {
-  id: string;
-  position: number;
-  driver: string;
-  nationality: string;
-  team: string;
-  points: number;
-  wins: number;
-  podiums: number;
-  teamColor: string;
-  competitionId: string; // Añadido para permitir filtrado por competición
-}
+// Key para almacenamiento en localStorage (solo para modo desarrollo)
+const STORAGE_KEY = 'edge_racing_drivers';
 
-// Mock data inicial (simulación de una base de datos)
+// Mock data inicial (simulación para desarrollo)
 const initialDrivers: Driver[] = [
   { 
     id: "verstappen",
-    position: 1, 
-    driver: "Max Verstappen", 
-    nationality: "NED", 
-    team: "Red Bull Racing", 
-    points: 280, 
-    wins: 8, 
+    first_name: "Max",
+    last_name: "Verstappen",
+    birth_date: "1997-09-30",
+    birth_country: "NED",
+    vehicle_number: 1,
+    profile_image: "/images/drivers/verstappen.jpg",
+    active: true,
+    points: 280,
+    team_id: "redbull",
+    competition_id: "formula1",
+    // Campos calculados para UI
+    position: 1,
+    wins: 8,
     podiums: 11,
     teamColor: "#0600EF",
-    competitionId: "formula1"
+    team: "Red Bull Racing",
+    nationality: "NED"
   },
   { 
     id: "norris",
-    position: 2, 
-    driver: "Lando Norris", 
-    nationality: "GBR", 
-    team: "McLaren", 
-    points: 219, 
-    wins: 1, 
+    first_name: "Lando",
+    last_name: "Norris",
+    birth_date: "1999-11-13",
+    birth_country: "GBR",
+    vehicle_number: 4,
+    profile_image: "/images/drivers/norris.jpg",
+    active: true,
+    points: 219,
+    team_id: "mclaren",
+    competition_id: "formula1",
+    position: 2,
+    wins: 1,
     podiums: 9,
     teamColor: "#FF8700",
-    competitionId: "formula1"
+    team: "McLaren",
+    nationality: "GBR"
   },
-  { 
-    id: "leclerc",
-    position: 3, 
-    driver: "Charles Leclerc", 
-    nationality: "MON", 
-    team: "Ferrari", 
-    points: 208, 
-    wins: 2, 
-    podiums: 8,
-    teamColor: "#DC0000",
-    competitionId: "formula1"
-  },
-  {
-    id: "martin",
-    position: 1,
-    driver: "Jorge Martín",
-    nationality: "ESP",
-    team: "Pramac Racing",
-    points: 275,
-    wins: 5,
-    podiums: 12,
-    teamColor: "#2596be",
-    competitionId: "motogp"
-  },
-  {
-    id: "bagnaia",
-    position: 2,
-    driver: "Francesco Bagnaia",
-    nationality: "ITA",
-    team: "Ducati Lenovo",
-    points: 270,
-    wins: 6,
-    podiums: 10,
-    teamColor: "#FF0000",
-    competitionId: "motogp"
-  },
-  {
-    id: "marquez",
-    position: 3,
-    driver: "Marc Márquez",
-    nationality: "ESP",
-    team: "Gresini Racing",
-    points: 225,
-    wins: 1,
-    podiums: 8,
-    teamColor: "#56A0D3",
-    competitionId: "motogp"
-  }
+  // Más pilotos...
 ];
-
-// Key para almacenamiento en localStorage
-const STORAGE_KEY = 'edge_racing_drivers';
 
 export function useDrivers() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -103,47 +60,63 @@ export function useDrivers() {
   const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
-  // Cargar datos de localStorage o usar datos iniciales
+  // Cargar datos desde la API o localStorage como fallback
   useEffect(() => {
-    // Evitar múltiples inicializaciones
     if (!isInitialized) {
-      try {
-        // Intenta obtener los datos de localStorage
-        const storedData = localStorage.getItem(STORAGE_KEY);
-        console.log("Datos almacenados en localStorage:", storedData);
-        
-        if (storedData) {
-          const parsedData = JSON.parse(storedData);
-          console.log("Datos parseados de localStorage:", parsedData);
-          setDrivers(parsedData);
-        } else {
-          console.log("No hay datos en localStorage, usando iniciales:", initialDrivers);
-          setDrivers(initialDrivers);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDrivers));
+      const fetchDrivers = async () => {
+        try {
+          // Intentar obtener datos de la API
+          const response = await apiClient.get(API_ENDPOINTS.drivers);
+          console.log("Datos obtenidos de la API:", response.data);
+          
+          // Transformar los datos al formato esperado por la UI
+          const formattedDrivers = response.data.map((driver: any) => ({
+            ...driver,
+            // Crear campos derivados para compatibilidad con la UI
+            driver: `${driver.first_name} ${driver.last_name}`, // Campo calculado
+            nationality: driver.birth_country,
+          }));
+          
+          setDrivers(formattedDrivers);
+        } catch (error) {
+          console.error("Error al cargar pilotos desde API:", error);
+          
+          // Fallback a localStorage en modo desarrollo
+          try {
+            const storedData = localStorage.getItem(STORAGE_KEY);
+            if (storedData) {
+              console.log("Usando datos de localStorage como fallback");
+              setDrivers(JSON.parse(storedData));
+            } else {
+              console.log("Usando datos mock como fallback");
+              setDrivers(initialDrivers);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDrivers));
+            }
+          } catch (localError) {
+            console.error("Error completo al cargar drivers:", localError);
+            setError('Error al cargar los pilotos');
+            setDrivers(initialDrivers);
+          }
+        } finally {
+          setLoading(false);
+          setIsInitialized(true);
         }
-      } catch (error) {
-        console.error("Error al cargar drivers de localStorage:", error);
-        setError('Error al cargar los pilotos');
-        setDrivers(initialDrivers);
-      } finally {
-        setLoading(false);
-        setIsInitialized(true);
-      }
+      };
+
+      fetchDrivers();
     }
   }, [isInitialized]);
 
-  // Guardar datos en localStorage cuando cambian
+  // Actualizar localStorage en desarrollo cuando cambian los drivers
   useEffect(() => {
-    if (isInitialized && !loading) {
-      console.log("Guardando drivers en localStorage:", drivers);
+    if (isInitialized && !loading && process.env.NODE_ENV === 'development') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(drivers));
     }
   }, [drivers, loading, isInitialized]);
 
-  // Obtener un piloto por ID - IMPORTANTE: Esta función causa problemas
+  // Obtener un piloto por ID
   const getDriverById = useCallback((id: string) => {
     console.log("Buscando piloto con ID:", id);
-    console.log("Lista de pilotos disponible:", drivers);
     
     const driver = drivers.find(driver => driver.id === id);
     console.log("Piloto encontrado:", driver);
@@ -153,22 +126,15 @@ export function useDrivers() {
 
   // Filtrar pilotos por competición
   const getDriversByCompetition = useCallback((competitionId: string) => {
-    return drivers.filter(driver => driver.competitionId === competitionId);
+    return drivers.filter(driver => driver.competition_id === competitionId);
   }, [drivers]);
 
   // Añadir un nuevo piloto
   const addDriver = useCallback(async (driver: Omit<Driver, 'id'>) => {
     try {
-      // Generar un ID único basado en el nombre
-      const id = driver.driver
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '');
-      
-      const newDriver = {
-        ...driver,
-        id
-      };
+      // Usar el endpoint correcto para crear un nuevo driver
+      const response = await apiClient.post(API_ENDPOINTS.driverNew, driver);
+      const newDriver = response.data;
       
       setDrivers(prevDrivers => [...prevDrivers, newDriver]);
       console.log("Piloto añadido:", newDriver);
@@ -184,33 +150,17 @@ export function useDrivers() {
   // Actualizar un piloto existente
   const updateDriver = useCallback(async (id: string, updatedData: Partial<Driver>) => {
     try {
-      console.log("Actualizando piloto con ID:", id);
-      console.log("Datos de actualización:", updatedData);
-      
-      let updatedDriver: Driver | null = null;
+      // Enviar a la API
+      const response = await apiClient.put(`${API_ENDPOINTS.drivers}/${id}`, updatedData);
+      const updatedDriver = response.data;
       
       setDrivers(prevDrivers => {
-        const index = prevDrivers.findIndex(driver => driver.id === id);
-        console.log("Índice del piloto:", index);
-        
-        if (index === -1) {
-          console.error("Piloto no encontrado para actualizar");
-          throw new Error('Piloto no encontrado');
-        }
-        
-        const updatedDrivers = [...prevDrivers];
-        updatedDrivers[index] = {
-          ...updatedDrivers[index],
-          ...updatedData
-        };
-        
-        updatedDriver = updatedDrivers[index];
-        console.log("Array de pilotos actualizado:", updatedDrivers);
-        return updatedDrivers;
+        return prevDrivers.map(driver => 
+          driver.id === id ? { ...driver, ...updatedDriver } : driver
+        );
       });
       
       router.refresh();
-      console.log("Piloto actualizado:", updatedDriver);
       return updatedDriver;
     } catch (error) {
       console.error("Error al actualizar piloto:", error);
@@ -222,12 +172,10 @@ export function useDrivers() {
   // Eliminar un piloto
   const deleteDriver = useCallback(async (id: string) => {
     try {
-      console.log("Eliminando piloto con ID:", id);
-      setDrivers(prevDrivers => {
-        const filteredDrivers = prevDrivers.filter(driver => driver.id !== id);
-        console.log("Pilotos después de eliminar:", filteredDrivers);
-        return filteredDrivers;
-      });
+      // Enviar a la API
+      await apiClient.delete(`${API_ENDPOINTS.drivers}/${id}`);
+      
+      setDrivers(prevDrivers => prevDrivers.filter(driver => driver.id !== id));
       router.refresh();
     } catch (error) {
       console.error("Error al eliminar piloto:", error);

@@ -1,20 +1,145 @@
 'use client';
 
-import Link from "next/link";
-import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
 import CompetitionSelector from "./components/competition-selector";
+import ViewTabs from "./components/view-tabs";
+import PilotClassification from "./components/pilot-classification";
+import TeamClassification from "./components/team-classification";
 import { useCompetitions } from "@/lib/hooks/useCompetitions";
+import { getGlobalDriversRanking, getGlobalTeamsRanking } from "@/services/rankingService";
+import { Driver } from "@/lib/hooks/useDrivers";
+import { Team } from "@/lib/hooks/useTeams";
 
-export default function Clasificacion() {
-  const { competitions, loading } = useCompetitions();
+export default function CompetitionPage() {
+  const params = useParams();
+  const competitionId = params.competition as string;
+  const [activeView, setActiveView] = useState<"drivers" | "teams">("drivers");
   
-  if (loading) {
+  const { competitions, loading: competitionsLoading } = useCompetitions();
+  const [driversRanking, setDriversRanking] = useState<Driver[]>([]);
+  const [teamsRanking, setTeamsRanking] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filteredDrivers, setFilteredDrivers] = useState<Driver[]>([]);
+  const [filteredTeams, setFilteredTeams] = useState<Team[]>([]);
+  const [competition, setCompetition] = useState<any>(null);
+  
+  // Cargar datos de competiciones
+  useEffect(() => {
+    if (!competitionsLoading && competitions.length > 0) {
+      const selectedCompetition = competitions.find(comp => comp.id === competitionId);
+      setCompetition(selectedCompetition || null);
+    }
+  }, [competitionId, competitions, competitionsLoading]);
+  
+  // Cargar datos de clasificaciones
+  useEffect(() => {
+    const fetchRankings = async () => {
+      setLoading(true);
+      try {
+        // Obtener clasificaciones globales
+        const [driversData, teamsData] = await Promise.all([
+          getGlobalDriversRanking(),
+          getGlobalTeamsRanking()
+        ]);
+        
+        // Transformar datos si es necesario para adaptarlos a las interfaces
+        const formattedDrivers = driversData.map((driver: any) => ({
+          id: String(driver.driver_id),
+          position: driver.position,
+          driver: driver.driver_name,
+          nationality: driver.nationality || 'Unknown',
+          team: driver.team_name,
+          points: driver.points,
+          wins: driver.wins,
+          podiums: driver.podiums,
+          teamColor: driver.team_color,
+          competitionId: String(driver.competition_id)
+        }));
+        
+        const formattedTeams = teamsData.map((team: any) => ({
+          id: String(team.team_id),
+          position: team.position,
+          team: team.team_name,
+          points: team.points,
+          wins: team.wins,
+          podiums: team.podiums,
+          color: team.color,
+          competitionId: String(team.competition_id)
+        }));
+        
+        setDriversRanking(formattedDrivers);
+        setTeamsRanking(formattedTeams);
+        
+        // Filtrar por competición seleccionada
+        if (competitionId) {
+          setFilteredDrivers(formattedDrivers.filter(d => d.competitionId === competitionId));
+          setFilteredTeams(formattedTeams.filter(t => t.competitionId === competitionId));
+        }
+      } catch (err) {
+        console.error('Error al cargar clasificaciones:', err);
+        setError('Error al cargar las clasificaciones');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchRankings();
+  }, [competitionId]);
+  
+  // Mostrar indicador de carga
+  if (loading || competitionsLoading) {
     return (
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center items-center h-32">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
         </div>
+      </div>
+    );
+  }
+  
+  // Si no se encuentra la competición
+  if (!competition) {
+    return (
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="bg-[color:var(--racing-gray)]/30 backdrop-blur-sm rounded-xl p-6 border border-gray-800 text-center">
+          <h2 className="text-xl font-bold mb-2">Competición no encontrada</h2>
+          <p className="text-gray-400 mb-4">
+            La competición que estás buscando no existe o no está disponible.
+          </p>
+          <Link 
+            href="/clasificacion" 
+            className="inline-flex items-center text-[color:var(--f1-red)] hover:underline"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-4 mr-2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+            </svg>
+            Volver a clasificaciones
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  
+  // Mostrar error si ocurre
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="bg-red-900/50 border border-red-800 rounded-md p-4 text-red-300 mb-4">
+          {error}
+        </div>
+        <Link 
+          href="/clasificacion" 
+          className="inline-flex items-center text-[color:var(--f1-red)] hover:underline"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-4 mr-2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+          </svg>
+          Volver a clasificaciones
+        </Link>
       </div>
     );
   }
@@ -36,96 +161,64 @@ export default function Clasificacion() {
       </div>
       
       <div className="bg-[color:var(--racing-gray)]/30 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
-        <div className="text-center py-16">
-          <div className="flex justify-center mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" className="size-24 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17l-5-5m0 0l5-5m-5 5h12M19 17l5-5m0 0l-5-5m5 5H7" />
-            </svg>
-          </div>
-          <h3 className="text-2xl font-bold mb-3">Selecciona una competición para ver su clasificación</h3>
-          <p className="text-gray-400 max-w-lg mx-auto mb-8">
-            Elige entre las competiciones disponibles para ver las clasificaciones actualizadas de pilotos y equipos de la temporada actual.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-5 justify-center">
-            {competitions.length > 0 ? (
-              competitions.map(comp => (
-                <Link 
-                  key={comp.id} 
-                  href={`/clasificacion/${comp.id}`} 
-                  className="inline-flex items-center px-5 py-3 rounded-lg font-medium text-white transition-all hover:scale-105"
-                  style={{ backgroundColor: comp.color }}
-                >
-                  Ver clasificación de {comp.name}
-                  <svg xmlns="http://www.w3.org/2000/svg" className="size-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              ))
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center">
+            {competition.logo ? (
+              <div className="mr-4 size-12 bg-white rounded-full p-1">
+                <Image 
+                  src={competition.logo} 
+                  alt={competition.name} 
+                  width={48}
+                  height={48}
+                  className="object-contain"
+                />
+              </div>
             ) : (
-              <div className="text-gray-400 text-center">
-                No hay competiciones disponibles. Añade competiciones desde el dashboard.
+              <div 
+                className="mr-4 size-12 rounded-full flex items-center justify-center text-xl font-bold"
+                style={{ backgroundColor: competition.color }}
+              >
+                {competition.name.charAt(0)}
               </div>
             )}
-          </div>
-        </div>
-        
-        {/* Sección informativa */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 pt-10 border-t border-gray-800">
-          <div className="flex flex-col items-center text-center p-4">
-            <div className="size-12 flex items-center justify-center bg-[color:var(--f1-red)]/20 text-[color:var(--f1-red)] rounded-full mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h4 className="text-lg font-bold mb-2">Resultados en tiempo real</h4>
-            <p className="text-gray-400 text-sm">
-              Datos actualizados después de cada carrera con los últimos resultados oficiales.
-            </p>
-          </div>
-          
-          <div className="flex flex-col items-center text-center p-4">
-            <div className="size-12 flex items-center justify-center bg-[color:var(--motogp-blue)]/20 text-[color:var(--motogp-blue)] rounded-full mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-              </svg>
-            </div>
-            <h4 className="text-lg font-bold mb-2">Estadísticas completas</h4>
-            <p className="text-gray-400 text-sm">
-              Consulta puntos, victorias, podios y otros datos relevantes para cada piloto y equipo.
-            </p>
-          </div>
-          
-          <div className="flex flex-col items-center text-center p-4">
-            <div className="size-12 flex items-center justify-center bg-[color:var(--accent-yellow)]/20 text-[color:var(--accent-yellow)] rounded-full mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h4 className="text-lg font-bold mb-2">Temporada 2025</h4>
-            <p className="text-gray-400 text-sm">
-              Clasificaciones correspondientes a la temporada actual en curso.
-            </p>
-          </div>
-        </div>
-        
-        {/* Nota histórica */}
-        <div className="mt-12 bg-[color:var(--racing-black)]/50 rounded-lg p-5 border border-gray-800">
-          <div className="flex items-start">
-            <div className="mr-4">
-              <div className="size-8 flex items-center justify-center bg-gray-800 rounded-full text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
             <div>
-              <h4 className="text-sm font-medium text-gray-300 mb-1">Nota sobre el sistema de puntuación:</h4>
-              <p className="text-xs text-gray-500">
-                El sistema de puntuación actual otorga puntos a los 10 primeros clasificados en F1 (25, 18, 15, 12, 10, 8, 6, 4, 2, 1) y MotoGP (25, 20, 16, 13, 11, 10, 9, 8, 7, 6), con puntos adicionales para sprint races y vuelta rápida.
-              </p>
+              <h2 className="text-2xl font-bold">{competition.name}</h2>
+              <p className="text-sm text-gray-400">{competition.description}</p>
             </div>
           </div>
+          
+          <div className="hidden md:block">
+            <span 
+              className="inline-block px-3 py-1 text-sm font-medium rounded-full"
+              style={{ backgroundColor: competition.color }}
+            >
+              Temporada {competition.season}
+            </span>
+          </div>
+        </div>
+
+        <ViewTabs 
+          onTabChange={setActiveView}
+          competitionId={competitionId}
+        />
+        
+        {activeView === "drivers" ? (
+          <PilotClassification 
+            drivers={filteredDrivers} 
+            competitionId={competitionId} 
+          />
+        ) : (
+          <TeamClassification 
+            teams={filteredTeams} 
+            competitionId={competitionId} 
+          />
+        )}
+        
+        {/* Añadir sección de fuente de datos */}
+        <div className="mt-8 pt-4 border-t border-gray-700">
+          <p className="text-sm text-gray-400 text-center">
+            Datos actualizados en tiempo real desde la base de datos oficial de Edge Racing.
+          </p>
         </div>
       </div>
     </div>

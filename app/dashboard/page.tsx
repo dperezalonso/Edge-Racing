@@ -2,51 +2,96 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useDrivers } from "@/lib/hooks/useDrivers";
-import { useTeams } from "@/lib/hooks/useTeams";
+import { getGlobalDriversRanking, getGlobalTeamsRanking } from "@/services/rankingService";
+import { getTracks } from "@/services/trackService";
+import { getRaces } from "@/services/raceService";
 import { useCompetitions } from "@/lib/hooks/useCompetitions";
 
+// Interfaces para tipos de datos
+interface Driver {
+  id: string;
+  driver_name: string;
+  position: number;
+  team_name: string;
+  points: number;
+  nationality?: string;
+  team_color?: string;
+}
+
+interface Team {
+  id: string;
+  team_name: string;
+  position: number;
+  points: number;
+  wins: number;
+  color?: string;
+  country?: string;
+}
+
 export default function Dashboard() {
-  const { drivers, loading: driversLoading } = useDrivers();
-  const { teams, loading: teamsLoading } = useTeams();
   const { competitions, loading: competitionsLoading } = useCompetitions();
+  const [topDrivers, setTopDrivers] = useState<Driver[]>([]);
+  const [topTeams, setTopTeams] = useState<Team[]>([]);
+  const [totalTracks, setTotalTracks] = useState<number>(0);
+  const [totalRaces, setTotalRaces] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Establecer el estado de carga
+  // Cargar datos al iniciar
   useEffect(() => {
-    if (!driversLoading && !teamsLoading && !competitionsLoading) {
-      setLoading(false);
-    }
-  }, [driversLoading, teamsLoading, competitionsLoading]);
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        // Cargar datos en paralelo
+        const [driversData, teamsData, tracksData, racesData] = await Promise.all([
+          getGlobalDriversRanking(),
+          getGlobalTeamsRanking(),
+          getTracks(),
+          getRaces()
+        ]);
 
-  // Función para obtener los mejores pilotos (top 4)
-  const getTopDrivers = () => {
-    if (driversLoading || drivers.length === 0) return [];
-    
-    // Ordenar pilotos por puntos y obtener los 4 mejores
-    return [...drivers]
-      .sort((a, b) => b.points - a.points)
-      .slice(0, 4)
-      .map(driver => ({
-        ...driver,
-        displayName: driver.driver, // Para mantener la compatibilidad con el JSX existente
-      }));
-  };
+        // Procesar datos de pilotos
+        const formattedDrivers = driversData.map((driver: any) => ({
+          id: String(driver.id || driver.driver_id),
+          driver_name: driver.driver_name,
+          position: driver.position,
+          team_name: driver.team_name,
+          points: driver.points,
+          nationality: driver.nationality,
+          team_color: driver.team_color
+        }));
 
-  // Función para obtener los mejores equipos (top 4)
-  const getTopTeams = () => {
-    if (teamsLoading || teams.length === 0) return [];
-    
-    // Ordenar equipos por puntos y obtener los 4 mejores
-    return [...teams]
-      .sort((a, b) => b.points - a.points)
-      .slice(0, 4)
-      .map(team => ({
-        ...team,
-        name: team.team, // Para mantener la compatibilidad con el JSX existente
-        country: getTeamCountry(team.team), // Función auxiliar para obtener el país
-      }));
-  };
+        // Procesar datos de equipos
+        const formattedTeams = teamsData.map((team: any) => ({
+          id: String(team.id || team.team_id),
+          team_name: team.team_name,
+          position: team.position,
+          points: team.points,
+          wins: team.wins,
+          color: team.color,
+          country: getTeamCountry(team.team_name) // Función auxiliar para obtener país
+        }));
+
+        // Ordenar por posición y tomar los 4 primeros
+        const sortedDrivers = formattedDrivers.sort((a, b) => a.position - b.position).slice(0, 4);
+        const sortedTeams = formattedTeams.sort((a, b) => a.position - b.position).slice(0, 4);
+
+        setTopDrivers(sortedDrivers);
+        setTopTeams(sortedTeams);
+        setTotalTracks(tracksData.length);
+        setTotalRaces(racesData.length);
+        setError(null);
+
+      } catch (err) {
+        console.error('Error al cargar datos del dashboard:', err);
+        setError('Error al cargar los datos. Por favor, inténtalo de nuevo.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   // Función auxiliar para asignar países a los equipos (simula datos adicionales)
   const getTeamCountry = (teamName: string) => {
@@ -64,8 +109,8 @@ export default function Dashboard() {
     return teamCountries[teamName] || "Desconocido";
   };
 
-  // Estado de carga
-  if (loading || driversLoading || teamsLoading || competitionsLoading) {
+  // Mostrar estado de carga
+  if (loading || competitionsLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
@@ -73,46 +118,57 @@ export default function Dashboard() {
     );
   }
 
-  const topDrivers = getTopDrivers();
-  const topTeams = getTopTeams();
-  const totalDrivers = drivers.length;
-  const totalTeams = teams.length;
+  // Mostrar error si ocurre
+  if (error) {
+    return (
+      <div className="p-4 bg-red-900/50 border border-red-800 rounded-md text-red-300 mb-4">
+        {error}
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
+
+  const totalDrivers = topDrivers.length > 0 ? 20 : 0; // Valor aproximado si hay datos
+  const totalTeams = topTeams.length > 0 ? 10 : 0; // Valor aproximado si hay datos
   const totalCompetitions = competitions.length;
   const totalCountries = [...new Set(topTeams.map(team => team.country))].length;
 
   return (
     <section className="space-y-4">
-     
-
       {/* Resumen en tarjetas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { 
-            title: 'Total Pilotos', 
-            value: totalDrivers.toString(), 
-            color: 'bg-blue-600', 
+          {
+            title: 'Total Pilotos',
+            value: totalDrivers.toString(),
+            color: 'bg-blue-600',
             icon: 'user',
             link: '/dashboard/drivers'
           },
-          { 
-            title: 'Equipos Activos', 
-            value: totalTeams.toString(), 
-            color: 'bg-purple-600', 
+          {
+            title: 'Equipos Activos',
+            value: totalTeams.toString(),
+            color: 'bg-purple-600',
             icon: 'team',
             link: '/dashboard/teams'
           },
-          { 
-            title: 'Competiciones', 
-            value: totalCompetitions.toString(), 
-            color: 'bg-amber-600', 
+          {
+            title: 'Competiciones',
+            value: totalCompetitions.toString(),
+            color: 'bg-amber-600',
             icon: 'calendar',
             link: '/dashboard/competitions'
           },
-          { 
-            title: 'Países', 
-            value: totalCountries.toString(), 
-            color: 'bg-emerald-600', 
-            icon: 'globe' 
+          {
+            title: 'Países',
+            value: totalCountries.toString(),
+            color: 'bg-emerald-600',
+            icon: 'globe'
           },
         ].map((card, index) => (
           <Link key={index} href={card.link || '#'} className={`block ${card.link ? 'hover:shadow-md hover:-translate-y-1 transition-all' : ''}`}>
@@ -163,8 +219,8 @@ export default function Dashboard() {
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Top Pilotos</h2>
-              <Link 
-                href="/dashboard/drivers" 
+              <Link
+                href="/dashboard/drivers"
                 className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
               >
                 <span>Ver todo</span>
@@ -182,13 +238,13 @@ export default function Dashboard() {
                         {index + 1}
                       </div>
                       <div>
-                        <p className="font-medium">{driver.displayName}</p>
-                        <p className="text-sm text-gray-400">{driver.team}</p>
+                        <p className="font-medium">{driver.driver_name}</p>
+                        <p className="text-sm text-gray-400">{driver.team_name}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-amber-400 font-bold">{driver.points} pts</div>
-                      <Link 
+                      <Link
                         href={`/dashboard/drivers/edit/${driver.id}`}
                         className="text-blue-400 hover:text-blue-300"
                       >
@@ -206,8 +262,8 @@ export default function Dashboard() {
               )}
             </ul>
             <div className="mt-4">
-              <Link 
-                href="/dashboard/drivers/add" 
+              <Link
+                href="/dashboard/drivers/add"
                 className="flex items-center justify-center text-sm text-blue-400 hover:text-blue-300 bg-blue-400/10 hover:bg-blue-400/20 py-2 px-4 rounded-md mt-2 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2">
@@ -224,8 +280,8 @@ export default function Dashboard() {
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Top Equipos</h2>
-              <Link 
-                href="/dashboard/teams" 
+              <Link
+                href="/dashboard/teams"
                 className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
               >
                 <span>Ver todo</span>
@@ -243,13 +299,13 @@ export default function Dashboard() {
                         {index + 1}
                       </div>
                       <div>
-                        <p className="font-medium">{team.name}</p>
+                        <p className="font-medium">{team.team_name}</p>
                         <p className="text-sm text-gray-400">{team.country}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-amber-400 font-bold">{team.points} pts</div>
-                      <Link 
+                      <Link
                         href={`/dashboard/teams/edit/${team.id}`}
                         className="text-blue-400 hover:text-blue-300"
                       >
@@ -267,8 +323,8 @@ export default function Dashboard() {
               )}
             </ul>
             <div className="mt-4">
-              <Link 
-                href="/dashboard/teams/add" 
+              <Link
+                href="/dashboard/teams/add"
                 className="flex items-center justify-center text-sm text-purple-400 hover:text-purple-300 bg-purple-400/10 hover:bg-purple-400/20 py-2 px-4 rounded-md mt-2 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2">
@@ -286,8 +342,8 @@ export default function Dashboard() {
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Competiciones Activas</h2>
-            <Link 
-              href="/dashboard/competitions" 
+            <Link
+              href="/dashboard/competitions"
               className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
             >
               <span>Ver todo</span>
@@ -296,7 +352,7 @@ export default function Dashboard() {
               </svg>
             </Link>
           </div>
-          
+
           {competitions.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {competitions.map((competition, index) => (
@@ -305,14 +361,14 @@ export default function Dashboard() {
                     <div className="flex items-center">
                       {competition.logo ? (
                         <div className="w-10 h-10 rounded-full bg-white p-1 mr-3">
-                          <img 
-                            src={competition.logo} 
-                            alt={competition.name} 
+                          <img
+                            src={competition.logo}
+                            alt={competition.name}
                             className="w-full h-full object-contain"
                           />
                         </div>
                       ) : (
-                        <div 
+                        <div
                           className="w-10 h-10 rounded-full mr-3 flex items-center justify-center text-white font-bold"
                           style={{ backgroundColor: competition.color }}
                         >
@@ -324,7 +380,7 @@ export default function Dashboard() {
                         <p className="text-xs text-gray-400">{competition.season}</p>
                       </div>
                     </div>
-                    <Link 
+                    <Link
                       href={`/dashboard/competitions/edit/${competition.id}`}
                       className="text-blue-400 hover:text-blue-300"
                     >
@@ -334,15 +390,15 @@ export default function Dashboard() {
                     </Link>
                   </div>
                   <p className="text-sm text-gray-300 mb-3">{competition.description}</p>
-                  
+
                   <div className="flex flex-wrap gap-2">
-                    <Link 
+                    <Link
                       href={`/dashboard/drivers?competition=${competition.id}`}
                       className="text-xs px-2 py-1 bg-blue-600/20 text-blue-400 rounded"
                     >
                       Ver pilotos
                     </Link>
-                    <Link 
+                    <Link
                       href={`/dashboard/teams?competition=${competition.id}`}
                       className="text-xs px-2 py-1 bg-purple-600/20 text-purple-400 rounded"
                     >
@@ -355,8 +411,8 @@ export default function Dashboard() {
           ) : (
             <div className="text-center py-8 text-gray-400">
               <p className="mb-4">No hay competiciones disponibles.</p>
-              <Link 
-                href="/dashboard/competitions/add" 
+              <Link
+                href="/dashboard/competitions/add"
                 className="inline-flex items-center text-amber-400 hover:text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 py-2 px-4 rounded-md transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-2">
@@ -366,11 +422,11 @@ export default function Dashboard() {
               </Link>
             </div>
           )}
-          
+
           {competitions.length > 0 && (
             <div className="mt-4">
-              <Link 
-                href="/dashboard/competitions/add" 
+              <Link
+                href="/dashboard/competitions/add"
                 className="flex items-center justify-center text-sm text-amber-400 hover:text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 py-2 px-4 rounded-md transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2">
@@ -380,6 +436,75 @@ export default function Dashboard() {
               </Link>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Carreras próximas y circuitos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Próximas Carreras</h2>
+              <Link
+                href="/dashboard/races"
+                className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
+              >
+                <span>Ver calendario</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+
+            <div className="text-center py-4">
+              <p className="text-gray-400">
+                Próximamente: Calendario de carreras
+              </p>
+              <Link
+                href="/dashboard/races/add"
+                className="inline-flex items-center text-green-400 hover:text-green-300 bg-green-400/10 hover:bg-green-400/20 py-2 px-4 rounded-md mt-4 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Añadir carrera
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Circuitos</h2>
+              <Link
+                href="/dashboard/tracks"
+                className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
+              >
+                <span>Ver todos</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+
+            <div className="text-center py-4">
+              <p className="text-gray-400">
+                {totalTracks > 0
+                  ? `${totalTracks} circuitos registrados en la base de datos.`
+                  : 'No hay circuitos registrados actualmente.'}
+              </p>
+              <Link
+                href="/dashboard/tracks/add"
+                className="inline-flex items-center text-yellow-400 hover:text-yellow-300 bg-yellow-400/10 hover:bg-yellow-400/20 py-2 px-4 rounded-md mt-4 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Añadir circuito
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </section>
