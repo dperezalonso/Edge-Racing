@@ -1,92 +1,75 @@
 // services/rankingService.ts
 import apiClient from './api';
 import { API_ENDPOINTS } from '../config/api';
-import { StandingsFilter, StandingsResponse } from '../types/models';
 
-export const getGlobalDriverRankings = async () => {
+/**
+ * Obtiene la clasificación de pilotos usando la ruta driver/list
+ * Esta función reemplaza getGlobalDriversRanking 
+ */
+export const getGlobalDriversRanking = async () => {
   try {
-    const response = await apiClient.get(API_ENDPOINTS.globalDriverRankings);
-    return response.data;
-  } catch (error) {
-    console.error('Error al obtener clasificación global de pilotos:', error);
-    throw error;
-  }
-};
-
-// Obtener clasificación global de equipos
-export const getGlobalTeamRankings = async () => {
-  try {
-    const response = await apiClient.get(API_ENDPOINTS.globalTeamRankings);
-    return response.data;
-  } catch (error) {
-    console.error('Error al obtener clasificación global de equipos:', error);
-    throw error;
-  }
-};
-
-
-// Obtener clasificación con filtros (función versátil)
-export const getStandings = async (filters: StandingsFilter): Promise<StandingsResponse> => {
-  try {
-    // Construir URL base según el tipo de clasificación
-    const endpoint = filters.type === 'teams' 
-      ? API_ENDPOINTS.globalTeamRankings 
-      : API_ENDPOINTS.globalDriverRankings;
+    // Usar la ruta de lista de pilotos en lugar de la ruta global obsoleta
+    const response = await apiClient.get(API_ENDPOINTS.drivers);
     
-    // Añadir parámetros de consulta
-    const response = await apiClient.get(endpoint, { params: filters });
+    // Devolvemos los datos directamente, procesamiento adicional se hará en el componente
     return response.data;
   } catch (error) {
-    console.error('Error al obtener clasificación:', error);
-    throw error;
+    console.error('Error al obtener clasificación de pilotos:', error);
+    // En caso de error devolvemos un array vacío
+    return [];
   }
 };
 
-// Obtener la clasificación de una carrera específica
-export const getRaceRanking = async (raceId: string) => {
+/**
+ * Obtiene la clasificación de equipos usando la ruta team/list
+ * Esta función reemplaza getGlobalTeamsRanking
+ */
+export const getGlobalTeamsRanking = async () => {
   try {
-    const response = await apiClient.get(API_ENDPOINTS.rankingShow(raceId));
+    // Usar la ruta de lista de equipos en lugar de la ruta global obsoleta
+    const response = await apiClient.get(API_ENDPOINTS.teams);
+    
+    // Devolvemos los datos directamente, procesamiento adicional se hará en el componente
     return response.data;
   } catch (error) {
-    console.error(`Error al obtener clasificación de la carrera ${raceId}:`, error);
-    throw error;
+    console.error('Error al obtener clasificación de equipos:', error);
+    // En caso de error devolvemos un array vacío
+    return [];
   }
 };
 
-// Crear un nuevo resultado de carrera
-export const createRanking = async (rankingData: any) => {
-  try {
-    const response = await apiClient.post(API_ENDPOINTS.rankingNew, rankingData);
-    return response.data;
-  } catch (error) {
-    console.error('Error al crear resultado de carrera:', error);
-    throw error;
-  }
+/**
+ * Filtra la clasificación de pilotos por competición
+ */
+export const getDriversRankingByCompetition = (drivers: any[], competitionId: any) => {
+  if (!drivers || !Array.isArray(drivers)) return [];
+  
+  // Intentamos filtrar usando competition_id, que es el campo esperado
+  return drivers.filter(driver => {
+    // Buscamos el campo que contenga el ID de competición
+    const driverCompId = driver.competition_id || driver.competitionId || '';
+    return String(driverCompId) === String(competitionId);
+  });
 };
 
-// Actualizar un resultado de carrera
-export const updateRanking = async (id: string, rankingData: any) => {
-  try {
-    const response = await apiClient.post(API_ENDPOINTS.rankingEdit(id), rankingData);
-    return response.data;
-  } catch (error) {
-    console.error(`Error al actualizar resultado de carrera ${id}:`, error);
-    throw error;
-  }
+/**
+ * Filtra la clasificación de equipos por competición
+ */
+export const getTeamsRankingByCompetition = (teams: any[], competitionId: any) => {
+  if (!teams || !Array.isArray(teams)) return [];
+  
+  // Intentamos filtrar usando competition_id, que es el campo esperado
+  return teams.filter(team => {
+    // Buscamos el campo que contenga el ID de competición
+    const teamCompId = team.competition_id || team.competitionId || '';
+    return String(teamCompId) === String(competitionId);
+  });
 };
 
-// Eliminar un resultado de carrera
-export const deleteRanking = async (id: string) => {
-  try {
-    const response = await apiClient.get(API_ENDPOINTS.rankingDelete(id));
-    return response.data;
-  } catch (error) {
-    console.error(`Error al eliminar resultado de carrera ${id}:`, error);
-    throw error;
-  }
-};
-
+// Exportación para mantener compatibilidad
 export { 
-  getGlobalDriverRankings as getGlobalDriversRanking,
-  getGlobalTeamRankings as getGlobalTeamsRanking 
+  getGlobalDriversRanking as getDriverStandings,
+  getGlobalTeamsRanking as getTeamStandings,
+  getGlobalDriversRanking as getGlobalDriversStandings,
+  getGlobalTeamsRanking as getGlobalTeamsStandings
 };

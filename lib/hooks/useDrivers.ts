@@ -2,9 +2,31 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Driver } from '../../types/models';
 import apiClient from '@/services/api';
 import { API_ENDPOINTS } from '@/config/api';
+
+// Definimos la interfaz para Driver y la exportamos
+export interface Driver {
+  id: string;
+  first_name: string;
+  last_name: string;
+  birth_date: string;
+  birth_country: string;
+  vehicle_number: number;
+  profile_image: string | null;
+  active: boolean;
+  points: number;
+  team_id: string;
+  competition_id: string;
+  // Campos calculados/adicionales
+  position?: number;
+  wins?: number;
+  podiums?: number;
+  // Campos para UI
+  teamColor?: string;
+  team?: string; // Nombre del equipo
+  nationality?: string; // Alias para birth_country
+}
 
 // Key para almacenamiento en localStorage (solo para modo desarrollo)
 const STORAGE_KEY = 'edge_racing_drivers';

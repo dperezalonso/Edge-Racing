@@ -83,7 +83,7 @@ function Label({
   );
 }
 
-export function LoginForm({
+function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
@@ -192,22 +192,8 @@ export function LoginForm({
                   </span>
                 ) : 'Iniciar sesión'}
               </Button>
-              <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-gray-700">
-                <span className="relative z-10 bg-[color:var(--racing-gray)]/80 px-2 text-gray-400">
-                  O continuar con
-                </span>
-              </div>
-              <div className="grid grid-cols-1 gap-4">
-                <Button variant="outline" className="w-full py-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="size-8">
-                    <path
-                      d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  <span className="sr-only">Login with Google</span>
-                </Button>
-              </div>
+
+
               <div className="text-center text-sm text-gray-400">
                 ¿No tienes una cuenta?{" "}
                 <Link href="/registro" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">
@@ -230,6 +216,29 @@ export function LoginForm({
       <div className="text-balance text-center text-xs text-gray-500">
         Al hacer clic en continuar, aceptas nuestros <Link href="#" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">Términos de servicio</Link>{" "}
         y <Link href="#" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">Política de privacidad</Link>.
+      </div>
+    </div>
+  );
+}
+
+// Aquí está la corrección principal: 
+// Exportar un componente de página por defecto que utilice el LoginForm
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center px-4 py-12 bg-gradient-to-b from-[color:var(--racing-black)] to-[color:var(--f1-dark-blue)]/90 relative overflow-hidden">
+      {/* Elementos decorativos */}
+      <div className="absolute top-0 left-0 right-0 h-1 circuit-line"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-1 circuit-line"></div>
+      <div className="absolute -top-20 -right-20 w-40 h-40 checkered-flag opacity-10"></div>
+
+      <div className="w-full max-w-4xl mx-auto z-10">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[color:var(--f1-red)] to-[color:var(--motogp-blue)]">
+            Edge Racing
+          </h1>
+          <p className="text-gray-400 mt-2">Plataforma de gestión para competiciones de motor</p>
+        </div>
+        <LoginForm />
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ const adaptDriverData = (apiData: any) => {
     id: apiData.id,
     driver: `${apiData.first_name} ${apiData.last_name}`,
     nationality: apiData.birth_country,
-    team: apiData.team_name || "",
+    team: apiData.team_id || "",
     points: apiData.points || 0,
     wins: apiData.wins || 0,
     podiums: apiData.podiums || 0,

@@ -5,6 +5,10 @@ export default function Home() {
     <section className="relative flex flex-col items-center justify-center h-screen w-full overflow-hidden">
       {/* Video de fondo */}
       <div className="absolute inset-0 w-full h-full z-0">
+      
+      
+        {/* 
+          descomentar para ver el video de fondo
         <video 
           autoPlay 
           loop 
@@ -12,11 +16,11 @@ export default function Home() {
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="/videos/EdgeRacingIntro.mp4" type="video/mp4" />
-          {/* Video de respaldo por si el primero falla */}
+          
+         <source src="/videos/EdgeRacingIntro.mp4" type="video/mp4" /> 
           <source src="/videos/racing-background.webm" type="video/webm" />
           Tu navegador no soporta videos HTML5.
-        </video>
+        </video> */}
         {/* Overlay oscuro para mejorar la legibilidad del texto */}
         <div className="absolute inset-0 bg-black/70 z-10"></div>
       </div>

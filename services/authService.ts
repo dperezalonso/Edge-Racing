@@ -1,4 +1,5 @@
 // services/authService.ts
+
 import apiClient from './api';
 import { API_ENDPOINTS } from '../config/api';
 import { User } from '../types/models';
@@ -21,6 +22,16 @@ export interface AuthResponse {
   user: User;
 }
 
+// Configurar token de autenticación desde localStorage
+export const setupAuthFromLocalStorage = () => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) {
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+  }
+};
+
 export const login = async (data: LoginData): Promise<AuthResponse> => {
   try {
     const response = await apiClient.post(API_ENDPOINTS.auth.login, data);
@@ -30,6 +41,9 @@ export const login = async (data: LoginData): Promise<AuthResponse> => {
     if (authData.access_token && typeof window !== 'undefined') {
       localStorage.setItem('token', authData.access_token);
       localStorage.setItem('user', JSON.stringify(authData.user));
+      
+      // Configurar headers para futuras peticiones
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${authData.access_token}`;
     }
     
     return authData;
@@ -56,10 +70,11 @@ export const logout = async (): Promise<void> => {
       await apiClient.post(API_ENDPOINTS.auth.logout);
     }
     
-    // Limpiar localStorage incluso si la petición falla
+    // Limpiar localStorage y headers
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      delete apiClient.defaults.headers.common['Authorization'];
     }
   } catch (error) {
     console.error('Error durante logout:', error);
@@ -67,6 +82,7 @@ export const logout = async (): Promise<void> => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      delete apiClient.defaults.headers.common['Authorization'];
     }
     throw error;
   }

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import CompetitionSelector from "./components/competition-selector";
@@ -9,35 +9,54 @@ import ViewTabs from "./components/view-tabs";
 import PilotClassification from "./components/pilot-classification";
 import TeamClassification from "./components/team-classification";
 import { useCompetitions } from "@/lib/hooks/useCompetitions";
-import { getGlobalDriversRanking, getGlobalTeamsRanking } from "@/services/rankingService";
-import { Driver } from "@/lib/hooks/useDrivers";
-import { Team } from "@/lib/hooks/useTeams";
+import { 
+  getGlobalDriversRanking, 
+  getGlobalTeamsRanking,
+  getDriversRankingByCompetition,
+  getTeamsRankingByCompetition 
+} from "@/services/rankingService";
 
 export default function CompetitionPage() {
   const params = useParams();
   const competitionId = params.competition as string;
+  const router = useRouter(); // Añadimos el router para la redirección
   const [activeView, setActiveView] = useState<"drivers" | "teams">("drivers");
   
   const { competitions, loading: competitionsLoading } = useCompetitions();
-  const [driversRanking, setDriversRanking] = useState<Driver[]>([]);
-  const [teamsRanking, setTeamsRanking] = useState<Team[]>([]);
+  const [driversRanking, setDriversRanking] = useState<any[]>([]);
+  const [teamsRanking, setTeamsRanking] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filteredDrivers, setFilteredDrivers] = useState<Driver[]>([]);
-  const [filteredTeams, setFilteredTeams] = useState<Team[]>([]);
+  const [filteredDrivers, setFilteredDrivers] = useState<any[]>([]);
+  const [filteredTeams, setFilteredTeams] = useState<any[]>([]);
   const [competition, setCompetition] = useState<any>(null);
   
-  // Cargar datos de competiciones
+  // Efecto para buscar y establecer la competición actual
   useEffect(() => {
     if (!competitionsLoading && competitions.length > 0) {
       const selectedCompetition = competitions.find(comp => comp.id === competitionId);
+      
+      // Si no se encuentra la competición pero hay competiciones disponibles,
+      // redirigir a la primera competición
+      if (!selectedCompetition) {
+        // Verificar que hay competiciones disponibles antes de redirigir
+        if (competitions.length > 0) {
+          const firstCompetitionId = competitions[0].id;
+          console.log(`Competición ${competitionId} no encontrada, redirigiendo a /clasificacion/${firstCompetitionId}`);
+          router.push(`/clasificacion/${firstCompetitionId}`);
+          return;
+        }
+      }
+      
       setCompetition(selectedCompetition || null);
     }
-  }, [competitionId, competitions, competitionsLoading]);
+  }, [competitionId, competitions, competitionsLoading, router]);
   
   // Cargar datos de clasificaciones
   useEffect(() => {
     const fetchRankings = async () => {
+      if (!competitionId) return; // No cargar datos si no hay competición seleccionada
+      
       setLoading(true);
       try {
         // Obtener clasificaciones globales
@@ -46,42 +65,18 @@ export default function CompetitionPage() {
           getGlobalTeamsRanking()
         ]);
         
-        // Transformar datos si es necesario para adaptarlos a las interfaces
-        const formattedDrivers = driversData.map((driver: any) => ({
-          id: String(driver.driver_id),
-          position: driver.position,
-          driver: driver.driver_name,
-          nationality: driver.nationality || 'Unknown',
-          team: driver.team_name,
-          points: driver.points,
-          wins: driver.wins,
-          podiums: driver.podiums,
-          teamColor: driver.team_color,
-          competitionId: String(driver.competition_id)
-        }));
-        
-        const formattedTeams = teamsData.map((team: any) => ({
-          id: String(team.team_id),
-          position: team.position,
-          team: team.team_name,
-          points: team.points,
-          wins: team.wins,
-          podiums: team.podiums,
-          color: team.color,
-          competitionId: String(team.competition_id)
-        }));
-        
-        setDriversRanking(formattedDrivers);
-        setTeamsRanking(formattedTeams);
+        // Guardar clasificaciones globales
+        setDriversRanking(driversData);
+        setTeamsRanking(teamsData);
         
         // Filtrar por competición seleccionada
         if (competitionId) {
-          setFilteredDrivers(formattedDrivers.filter(d => d.competitionId === competitionId));
-          setFilteredTeams(formattedTeams.filter(t => t.competitionId === competitionId));
+          setFilteredDrivers(getDriversRankingByCompetition(driversData, competitionId));
+          setFilteredTeams(getTeamsRankingByCompetition(teamsData, competitionId));
         }
       } catch (err) {
         console.error('Error al cargar clasificaciones:', err);
-        setError('Error al cargar las clasificaciones');
+        setError('Error al cargar las clasificaciones. Por favor, intenta de nuevo más tarde.');
       } finally {
         setLoading(false);
       }
@@ -101,28 +96,8 @@ export default function CompetitionPage() {
     );
   }
   
-  // Si no se encuentra la competición
-  if (!competition) {
-    return (
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="bg-[color:var(--racing-gray)]/30 backdrop-blur-sm rounded-xl p-6 border border-gray-800 text-center">
-          <h2 className="text-xl font-bold mb-2">Competición no encontrada</h2>
-          <p className="text-gray-400 mb-4">
-            La competición que estás buscando no existe o no está disponible.
-          </p>
-          <Link 
-            href="/clasificacion" 
-            className="inline-flex items-center text-[color:var(--f1-red)] hover:underline"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-4 mr-2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-            </svg>
-            Volver a clasificaciones
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Si no se encuentra la competición, ya no mostramos un mensaje de error
+  // porque redirigimos automáticamente en el useEffect
   
   // Mostrar error si ocurre
   if (error) {
@@ -144,6 +119,19 @@ export default function CompetitionPage() {
     );
   }
   
+  // Si no hay competición en este punto, probablemente estamos a mitad de la redirección
+  // o hay algún otro problema, así que mostrar un mensaje de carga
+  if (!competition) {
+    return (
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
+          <span className="ml-3">Redirigiendo...</span>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-8 text-center">
@@ -157,7 +145,10 @@ export default function CompetitionPage() {
 
       <div className="mb-10">
         <h2 className="text-xl font-semibold mb-4">Selecciona una competición</h2>
-        <CompetitionSelector competitions={competitions} />
+        <CompetitionSelector 
+          competitions={competitions} 
+          baseRoute="/clasificacion"
+        />
       </div>
       
       <div className="bg-[color:var(--racing-gray)]/30 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
@@ -205,6 +196,7 @@ export default function CompetitionPage() {
         {activeView === "drivers" ? (
           <PilotClassification 
             drivers={filteredDrivers} 
+            teams={teamsRanking}
             competitionId={competitionId} 
           />
         ) : (

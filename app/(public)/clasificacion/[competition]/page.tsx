@@ -15,43 +15,43 @@ export default function CompetitionPage() {
   const params = useParams();
   const competitionId = params.competition ? Number(params.competition) : 0;
   const [activeView, setActiveView] = useState<"drivers" | "teams">("drivers");
-  
-  const { 
-    competitions, 
-    getDriversByCompetition, 
-    getTeamsByCompetition, 
+
+  const {
+    competitions,
+    getDriversByCompetition,
+    getTeamsByCompetition,
     getCompetitionById,
     loading
   } = useApiData();
-  
+
   const [filteredDrivers, setFilteredDrivers] = useState<any[]>([]);
   const [filteredTeams, setFilteredTeams] = useState<any[]>([]);
   const [competition, setCompetition] = useState<any>(null);
-  
+
   // Obtener la competición seleccionada y filtrar pilotos/equipos
   useEffect(() => {
     if (!loading && competitionId) {
       // Obtener la competición seleccionada
       const selectedCompetition = getCompetitionById(competitionId);
       setCompetition(selectedCompetition);
-      
+
       // Filtrar pilotos y equipos para esta competición
       if (selectedCompetition) {
         const driversForCompetition = getDriversByCompetition(competitionId);
         const teamsForCompetition = getTeamsByCompetition(competitionId);
-        
+
         console.log('Datos filtrados:', {
           competition: selectedCompetition,
           drivers: driversForCompetition,
           teams: teamsForCompetition
         });
-        
+
         setFilteredDrivers(driversForCompetition);
         setFilteredTeams(teamsForCompetition);
       }
     }
   }, [competitionId, loading, getCompetitionById, getDriversByCompetition, getTeamsByCompetition]);
-  
+
   // Mostrar indicador de carga
   if (loading) {
     return (
@@ -62,7 +62,7 @@ export default function CompetitionPage() {
       </div>
     );
   }
-  
+
   // Si no se encuentra la competición
   if (!competition) {
     return (
@@ -72,8 +72,8 @@ export default function CompetitionPage() {
           <p className="text-gray-400 mb-4">
             La competición que estás buscando no existe o no está disponible.
           </p>
-          <Link 
-            href="/clasificacion" 
+          <Link
+            href="/clasificacion"
             className="inline-flex items-center text-[color:var(--f1-red)] hover:underline"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-4 mr-2">
@@ -85,14 +85,14 @@ export default function CompetitionPage() {
       </div>
     );
   }
-  
+
   // Chequear que los datos están cargados correctamente
   console.log('Renderizando competición:', {
     competition,
     filteredDrivers,
     filteredTeams
   });
-  
+
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-8 text-center">
@@ -106,24 +106,24 @@ export default function CompetitionPage() {
 
       <div className="mb-10">
         <h2 className="text-xl font-semibold mb-4">Selecciona una competición</h2>
-        <CompetitionSelector competitions={competitions} />
+        <CompetitionSelector competitions={competitions} baseRoute={""} />
       </div>
-      
+
       <div className="bg-[color:var(--racing-gray)]/30 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center">
             {competition.logo ? (
               <div className="mr-4 size-12 bg-white rounded-full p-1">
-                <Image 
-                  src={competition.logo} 
-                  alt={competition.name} 
+                <Image
+                  src={competition.logo}
+                  alt={competition.name}
                   width={48}
                   height={48}
                   className="object-contain"
                 />
               </div>
             ) : (
-              <div 
+              <div
                 className="mr-4 size-12 rounded-full flex items-center justify-center text-xl font-bold"
                 style={{ backgroundColor: competition.color }}
               >
@@ -135,9 +135,9 @@ export default function CompetitionPage() {
               <p className="text-sm text-gray-400">{competition.description}</p>
             </div>
           </div>
-          
+
           <div className="hidden md:block">
-            <span 
+            <span
               className="inline-block px-3 py-1 text-sm font-medium rounded-full"
               style={{ backgroundColor: competition.color }}
             >
@@ -146,20 +146,22 @@ export default function CompetitionPage() {
           </div>
         </div>
 
-        <ViewTabs 
+        <ViewTabs
           onTabChange={setActiveView}
           competitionId={String(competitionId)}
         />
-        
+
         {activeView === "drivers" ? (
-          <PilotClassification 
-            drivers={filteredDrivers} 
-            competitionId={String(competitionId)} 
+          <PilotClassification
+            drivers={filteredDrivers}
+            competitionId={String(competitionId)}
+            teams={filteredTeams} // Pasar los equipos como prop
           />
         ) : (
-          <TeamClassification 
-            teams={filteredTeams} 
-            competitionId={String(competitionId)} 
+          <TeamClassification
+            teams={filteredTeams}
+            competitionId={String(competitionId)}
+
           />
         )}
       </div>
