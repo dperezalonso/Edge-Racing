@@ -2,18 +2,16 @@
 
 import { useState } from "react";
 
-import { Team } from "@/lib/hooks/useTeams";
 
 export default function PilotClassification({
   drivers,
-  competitionId,
   teams // Añadir teams como prop
 }: {
   drivers: any[];
   competitionId: string;
   teams: any[]; // Definir el tipo para teams
 }) {
-  const [sort, setSort] = useState<"position" | "points" | "wins">("position");
+  const [sort] = useState<"position" | "points" | "wins">("position");
 
   // Función para obtener información del equipo por ID
   const getTeamInfo = (teamId: number | string) => {

@@ -7,7 +7,7 @@ import { login, logout, setupAuthFromLocalStorage } from '@/services/authService
 import apiClient from '@/services/api';
 
 interface User {
-    id: number;
+    id: string;
     name: string;
     email: string;
 }

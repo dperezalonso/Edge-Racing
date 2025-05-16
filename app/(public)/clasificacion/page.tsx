@@ -23,7 +23,6 @@ export default function CompetitionPage() {
   const [activeView, setActiveView] = useState<"drivers" | "teams">("drivers");
   
   const { competitions, loading: competitionsLoading } = useCompetitions();
-  const [driversRanking, setDriversRanking] = useState<any[]>([]);
   const [teamsRanking, setTeamsRanking] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +65,7 @@ export default function CompetitionPage() {
         ]);
         
         // Guardar clasificaciones globales
-        setDriversRanking(driversData);
+        // setDriversRanking(driversData);
         setTeamsRanking(teamsData);
         
         // Filtrar por competición seleccionada

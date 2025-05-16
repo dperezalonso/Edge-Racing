@@ -1,6 +1,5 @@
 // lib/hooks/useApiIntegration.ts
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import apiClient from '@/services/api';
 
 // Adaptar datos de la API a nuestro formato interno
@@ -50,7 +49,6 @@ export function useApiData() {
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   // Cargar todos los datos necesarios
   const fetchAllData = useCallback(async () => {

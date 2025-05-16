@@ -12,7 +12,6 @@ export default function CompetitionSelector({
     baseRoute: string; 
 }) {
   const pathname = usePathname();
-  const isRootPath = pathname === "/clasificacion";
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

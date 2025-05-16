@@ -4,12 +4,11 @@ import { useState } from "react";
 
 export default function TeamClassification({
   teams,
-  competitionId
 }: {
   teams: any[];
   competitionId: string;
 }) {
-  const [sort, setSort] = useState<"position" | "points" | "wins">("position");
+  const [sort] = useState<"position" | "points" | "wins">("position");
   
   // Función para depurar - imprime la estructura del primer equipo
   console.log("Primer equipo:", teams.length > 0 ? teams[0] : "No hay equipos");

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { login } from "@/services/authService";
+import Image from "next/image";
 
 // Componentes base actualizados
 function Button({
@@ -204,7 +205,9 @@ function LoginForm({
           </form>
           <div className="relative hidden bg-[color:var(--racing-black)] md:block">
             <div className="absolute inset-0 h-full w-full object-cover overflow-hidden">
-              <img
+              <Image
+                width={500}
+                height={500}
                 src="/images/login-bg.jpg"
                 alt="Fondo de inicio de sesión"
                 className="h-full w-full object-cover"

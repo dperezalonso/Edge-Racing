@@ -3,37 +3,35 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getGlobalDriversRanking, getGlobalTeamsRanking } from "@/services/rankingService";
-import { getTracks } from "@/services/trackService";
-import { getRaces } from "@/services/raceService";
 import { useCompetitions } from "@/lib/hooks/useCompetitions";
+import Image from "next/image";
 
 // Interfaces para tipos de datos
-interface Driver {
-  id: string;
-  driver_name: string;
-  position: number;
-  team_name: string;
-  points: number;
-  nationality?: string;
-  team_color?: string;
-}
+// interface Driver {
+//   id: string;
+//   driver_name: string;
+//   position: number;
+//   team_name: string;
+//   points: number;
+//   nationality?: string;
+//   team_color?: string;
+// }
 
-interface Team {
-  id: string;
-  team_name: string;
-  position: number;
-  points: number;
-  wins: number;
-  color?: string;
-  country?: string;
-}
+// interface Team {
+//   id: string;
+//   team_name: string;
+//   position: number;
+//   points: number;
+//   wins: number;
+//   color?: string;
+//   country?: string;
+// }
 
 export default function Dashboard() {
   const { competitions, loading: competitionsLoading } = useCompetitions();
-  const [topDrivers, setTopDrivers] = useState<Driver[]>([]);
-  const [topTeams, setTopTeams] = useState<Team[]>([]);
+  // const [topDrivers, setTopDrivers] = useState<Driver[]>([]);
+  // const [topTeams, setTopTeams] = useState<Team[]>([]);
   const [totalTracks, setTotalTracks] = useState<number>(0);
-  const [totalRaces, setTotalRaces] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,43 +41,42 @@ export default function Dashboard() {
       setLoading(true);
       try {
         // Cargar datos en paralelo
-        const [driversData, teamsData, tracksData, racesData] = await Promise.all([
+        const [tracksData] = await Promise.all([
           getGlobalDriversRanking(),
           getGlobalTeamsRanking(),
-          getTracks(),
-          getRaces()
+
         ]);
 
         // Procesar datos de pilotos
-        const formattedDrivers = driversData.map((driver: any) => ({
-          id: String(driver.id || driver.driver_id),
-          driver_name: driver.driver_name,
-          position: driver.position,
-          team_name: driver.team_name,
-          points: driver.points,
-          nationality: driver.nationality,
-          team_color: driver.team_color
-        }));
+        // const formattedDrivers = driversData.map((driver: any) => ({
+        //   id: String(driver.id || driver.driver_id),
+        //   driver_name: driver.driver_name,
+        //   position: driver.position,
+        //   team_name: driver.team_name,
+        //   points: driver.points,
+        //   nationality: driver.nationality,
+        //   team_color: driver.team_color
+        // }));
 
         // Procesar datos de equipos
-        const formattedTeams = teamsData.map((team: any) => ({
-          id: String(team.id || team.team_id),
-          team_name: team.team_name,
-          position: team.position,
-          points: team.points,
-          wins: team.wins,
-          color: team.color,
-          country: getTeamCountry(team.team_name) // Función auxiliar para obtener país
-        }));
+        // const formattedTeams = teamsData.map((team: any) => ({
+        //   id: String(team.id || team.team_id),
+        //   team_name: team.team_name,
+        //   position: team.position,
+        //   points: team.points,
+        //   wins: team.wins,
+        //   color: team.color,
+        //   country: getTeamCountry(team.team_name) // Función auxiliar para obtener país
+        // }));
 
         // Ordenar por posición y tomar los 4 primeros
-        const sortedDrivers = formattedDrivers.sort((a, b) => a.position - b.position).slice(0, 4);
-        const sortedTeams = formattedTeams.sort((a, b) => a.position - b.position).slice(0, 4);
+        // const sortedDrivers = formattedDrivers.sort((a, b) => a.position - b.position).slice(0, 4);
+        // const sortedTeams = formattedTeams.sort((a, b) => a.position - b.position).slice(0, 4);
 
-        setTopDrivers(sortedDrivers);
-        setTopTeams(sortedTeams);
+        // setTopDrivers(sortedDrivers);
+        // setTopTeams(sortedTeams);
         setTotalTracks(tracksData.length);
-        setTotalRaces(racesData.length);
+       
         setError(null);
 
       } catch (err) {
@@ -94,20 +91,20 @@ export default function Dashboard() {
   }, []);
 
   // Función auxiliar para asignar países a los equipos (simula datos adicionales)
-  const getTeamCountry = (teamName: string) => {
-    const teamCountries: Record<string, string> = {
-      "Red Bull Racing": "Austria",
-      "Ferrari": "Italia",
-      "Mercedes": "Alemania",
-      "McLaren": "Reino Unido",
-      "Aston Martin": "Reino Unido",
-      "Ducati Lenovo Team": "Italia",
-      "Pramac Racing": "Italia",
-      "Aprilia Racing": "Italia",
-      "Gresini Racing": "Italia",
-    };
-    return teamCountries[teamName] || "Desconocido";
-  };
+  // const getTeamCountry = (teamName: string) => {
+  //   const teamCountries: Record<string, string> = {
+  //     "Red Bull Racing": "Austria",
+  //     "Ferrari": "Italia",
+  //     "Mercedes": "Alemania",
+  //     "McLaren": "Reino Unido",
+  //     "Aston Martin": "Reino Unido",
+  //     "Ducati Lenovo Team": "Italia",
+  //     "Pramac Racing": "Italia",
+  //     "Aprilia Racing": "Italia",
+  //     "Gresini Racing": "Italia",
+  //   };
+  //   return teamCountries[teamName] || "Desconocido";
+  // };
 
   // Mostrar estado de carga
   if (loading || competitionsLoading) {
@@ -133,10 +130,10 @@ export default function Dashboard() {
     );
   }
 
-  const totalDrivers = topDrivers.length > 0 ? 20 : 0; // Valor aproximado si hay datos
-  const totalTeams = topTeams.length > 0 ? 10 : 0; // Valor aproximado si hay datos
+  // const totalDrivers = topDrivers.length > 0 ? 20 : 0; // Valor aproximado si hay datos
+  // const totalTeams = topTeams.length > 0 ? 10 : 0; // Valor aproximado si hay datos
   const totalCompetitions = competitions.length;
-  const totalCountries = [...new Set(topTeams.map(team => team.country))].length;
+  // const totalCountries = [...new Set(topTeams.map(team => team.country))].length;
 
   return (
     <section className="space-y-4">
@@ -145,14 +142,14 @@ export default function Dashboard() {
         {[
           {
             title: 'Total Pilotos',
-            value: totalDrivers.toString(),
+            // value: totalDrivers.toString(),
             color: 'bg-blue-600',
             icon: 'user',
             link: '/dashboard/drivers'
           },
           {
             title: 'Equipos Activos',
-            value: totalTeams.toString(),
+            // value: totalTeams.toString(),
             color: 'bg-purple-600',
             icon: 'team',
             link: '/dashboard/teams'
@@ -166,7 +163,7 @@ export default function Dashboard() {
           },
           {
             title: 'Países',
-            value: totalCountries.toString(),
+            // value: totalCountries.toString(),
             color: 'bg-emerald-600',
             icon: 'globe'
           },
@@ -230,7 +227,7 @@ export default function Dashboard() {
               </Link>
             </div>
             <ul className="space-y-3">
-              {topDrivers.length > 0 ? (
+              {/* {topDrivers.length > 0 ? (
                 topDrivers.map((driver, index) => (
                   <li key={index} className="flex items-center justify-between py-2 border-b border-gray-700 last:border-0">
                     <div className="flex items-center gap-3">
@@ -259,7 +256,7 @@ export default function Dashboard() {
                 <li className="py-4 text-center text-gray-400">
                   No hay pilotos disponibles. Añade pilotos para ver el ranking.
                 </li>
-              )}
+              )} */}
             </ul>
             <div className="mt-4">
               <Link
@@ -291,7 +288,7 @@ export default function Dashboard() {
               </Link>
             </div>
             <ul className="space-y-3">
-              {topTeams.length > 0 ? (
+              {/* {topTeams.length > 0 ? (
                 topTeams.map((team, index) => (
                   <li key={index} className="flex items-center justify-between py-2 border-b border-gray-700 last:border-0">
                     <div className="flex items-center gap-3">
@@ -320,7 +317,7 @@ export default function Dashboard() {
                 <li className="py-4 text-center text-gray-400">
                   No hay equipos disponibles. Añade equipos para ver el ranking.
                 </li>
-              )}
+              )} */}
             </ul>
             <div className="mt-4">
               <Link
@@ -361,7 +358,8 @@ export default function Dashboard() {
                     <div className="flex items-center">
                       {competition.logo ? (
                         <div className="w-10 h-10 rounded-full bg-white p-1 mr-3">
-                          <img
+                          
+                          <Image
                             src={competition.logo}
                             alt={competition.name}
                             className="w-full h-full object-contain"

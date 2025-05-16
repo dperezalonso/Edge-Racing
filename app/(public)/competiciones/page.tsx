@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useCompetitions } from "@/lib/hooks/useCompetitions";
 import { useDrivers } from "@/lib/hooks/useDrivers";
 import { useTeams } from "@/lib/hooks/useTeams";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import Image from "next/image";
 
 export default function Competiciones() {
   const { competitions, loading: competitionsLoading } = useCompetitions();
-  const { drivers, getDriversByCompetition, loading: driversLoading } = useDrivers();
+  const { getDriversByCompetition, loading: driversLoading } = useDrivers();
   const { teams, getTeamsByCompetition, loading: teamsLoading } = useTeams();
 
   // Estado para controlar la visualización de detalles
@@ -60,9 +61,15 @@ export default function Competiciones() {
                 <div className="p-5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      {competition.logo ? (
+                      <div
+                        className="size-14 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0"
+                        style={{ backgroundColor: competition.color }}
+                      >
+                      {competition.name.charAt(0)}
+                      </div>
+                      {/* {competition.logo ? (
                         <div className="size-14 bg-white rounded-full p-1 flex-shrink-0">
-                          <img
+                          <Image
                             src={competition.logo}
                             alt={competition.name}
                             className="w-full h-full object-contain"
@@ -73,9 +80,8 @@ export default function Competiciones() {
                           className="size-14 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0"
                           style={{ backgroundColor: competition.color }}
                         >
-                          {competition.name.charAt(0)}
                         </div>
-                      )}
+                      )} */}
                       <div>
                         <h2 className="text-xl font-bold">{competition.name}</h2>
                         <div className="mt-1">

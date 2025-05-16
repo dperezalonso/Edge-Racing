@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/services/api';
-import { API_ENDPOINTS } from '@/config/api';
 
 // Define la interfaz para Team (ajustada para coincidir con la API)
 export interface Team {

@@ -14,7 +14,7 @@ export default function CompetitionDetailPage() {
     const competitionId = params.competition as string;
 
     const { competitions, loading: competitionsLoading } = useCompetitions();
-    const { drivers, getDriversByCompetition, loading: driversLoading } = useDrivers();
+    const { getDriversByCompetition, loading: driversLoading } = useDrivers();
     const { teams, loading: teamsLoading } = useTeams();
     
     // Estado para la competición actual

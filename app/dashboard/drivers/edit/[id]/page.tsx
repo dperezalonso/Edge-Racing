@@ -131,7 +131,7 @@ export default function EditDriverPage() {
           </button>
           <button 
             onClick={() => {
-              console.log("IDs disponibles:", drivers.map(d => ({id: d.id, name: d.driver})));
+              // console.log("IDs disponibles:", drivers.map(d => ({id: d.id, name: d.driver})));
               alert(`IDs disponibles: ${drivers.map(d => d.id).join(', ')}`);
             }}
             className="bg-blue-800 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"

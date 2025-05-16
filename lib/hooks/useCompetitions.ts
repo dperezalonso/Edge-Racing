@@ -2,12 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Competition } from '../../types/models';
 import apiClient from '@/services/api';
 import { API_ENDPOINTS } from '@/config/api';
 
 // Key para almacenamiento en localStorage
 const STORAGE_KEY = 'edge_racing_competitions';
+
+export interface Competition {
+  id: string;
+  name: string;
+  description: string;
+  logo?: string;
+  color: string;
+  season: string;
+}
 
 // Mock data inicial (simulación para desarrollo)
 const initialCompetitions: Competition[] = [
@@ -15,8 +23,8 @@ const initialCompetitions: Competition[] = [
     id: "formula1",
     name: "Formula 1",
     description: "Campeonato Mundial de Formula 1",
-    image: "/images/f1-logo.png",
-    status: "active",
+    // image: "/images/f1-logo.png",
+    // status: "active",
     // Campos personalizados para UI
     logo: "/images/f1-logo.png",
     season: "2025",
@@ -26,8 +34,8 @@ const initialCompetitions: Competition[] = [
     id: "motogp",
     name: "MotoGP",
     description: "Campeonato Mundial de Motociclismo",
-    image: "/images/motogp-logo.png",
-    status: "active",
+    // image: "/images/motogp-logo.png",
+    // status: "active",
     // Campos personalizados para UI
     logo: "/images/motogp-logo.png",
     season: "2025",
@@ -138,7 +146,7 @@ export function useCompetitions() {
       // Si hay campos personalizados UI, mapearlos a campos de la BD
       const apiData = { ...updatedData };
       if (apiData.logo) {
-        apiData.image = apiData.logo;
+        // apiData.image = apiData.logo;
         delete apiData.logo;
       }
       
@@ -193,5 +201,3 @@ export function useCompetitions() {
     deleteCompetition
   };
 }
-
-export { Competition };

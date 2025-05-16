@@ -2,6 +2,7 @@
 
 import { useCompetitions } from '@/lib/hooks/useCompetitions';
 import DataTable from '@/components/crud/DataTable';
+import Image from 'next/image';
 
 export default function CompetitionsPage() {
   const { competitions, loading, error, deleteCompetition } = useCompetitions();
@@ -29,7 +30,7 @@ export default function CompetitionsPage() {
       render: (item: any) => (
         item.logo ? (
           <div className="w-8 h-8 bg-white p-1 rounded-full">
-            <img src={item.logo} alt={item.name} className="w-full h-full object-contain" />
+            <Image src={item.logo} alt={item.name} className="w-full h-full object-contain" />
           </div>
         ) : (
           <div 

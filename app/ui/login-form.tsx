@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 // Componentes base actualizados sin forwardRef
 function Button({
@@ -155,7 +155,7 @@ export function LoginForm({
                     </form>
                     <div className="relative hidden bg-[color:var(--racing-black)] md:block">
                         <div className="absolute inset-0 h-full w-full object-cover overflow-hidden">
-                            <img
+                            <Image
                                 src="/images/login-bg.jpg"
                                 alt="Fondo de inicio de sesión"
                                 className="h-full w-full object-cover"
