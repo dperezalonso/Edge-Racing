@@ -5,7 +5,6 @@ import { useCompetitions } from "@/lib/hooks/useCompetitions";
 import { useDrivers } from "@/lib/hooks/useDrivers";
 import { useTeams } from "@/lib/hooks/useTeams";
 import { useState } from "react";
-import Image from "next/image";
 
 export default function Competiciones() {
   const { competitions, loading: competitionsLoading } = useCompetitions();
