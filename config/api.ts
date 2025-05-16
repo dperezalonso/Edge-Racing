@@ -1,5 +1,5 @@
 // config/api.ts
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://172.16.206.6:8000/api';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://172.16.206.6:8000/api';
 
 // Endpoints actualizados según las rutas de la API de Laravel
 export const API_ENDPOINTS = {
