@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { login } from "@/services/authService";
-import Image from "next/image";
 
 // Componentes base actualizados
 function Button({
@@ -84,17 +83,28 @@ function Label({
   );
 }
 
-function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Verificar si el usuario viene de un registro exitoso
+  useEffect(() => {
+    if (searchParams.get('registered') === 'true') {
+      setSuccess('Cuenta creada correctamente. Ahora puedes iniciar sesión.');
+    }
+    // Verificar si hay que mostrar un mensaje de sesión cerrada
+    if (searchParams.get('logout') === 'true') {
+      setSuccess('Has cerrado sesión correctamente.');
+    }
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -108,6 +118,7 @@ function LoginForm({
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setSuccess(null);
 
     try {
       const response = await login({
@@ -116,132 +127,141 @@ function LoginForm({
       });
 
       console.log('Login exitoso:', response);
-      // Redirigir al dashboard después del login exitoso
-      router.push('/dashboard');
+      
+      // Guardar información del usuario en el localStorage para la sesión
+      if (response.user && response.access_token) {
+        localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage.setItem('token', response.access_token);
+        
+        // Redirigir al dashboard después de un pequeño retraso
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 300);
+      }
     } catch (error: any) {
       console.error('Error al iniciar sesión:', error);
-      setError(error.response?.data?.message || 'Error al iniciar sesión. Por favor, verifica tus credenciales.');
+      setError(
+        error.response?.data?.message || 
+        'Error al iniciar sesión. Por favor, verifica tus credenciales.'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden bg-[color:var(--racing-gray)]/80 border-gray-800">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold text-white">Bienvenido de nuevo</h1>
-                <p className="text-balance text-gray-400">
-                  Accede a tu cuenta de Edge Racing
-                </p>
-              </div>
-
-              {error && (
-                <div className="bg-red-900/70 text-white p-3 rounded-md text-sm">
-                  {error}
+    <div className="min-h-screen flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md space-y-6">
+        <Card className="overflow-hidden bg-[color:var(--racing-gray)]/80 border-gray-800">
+          <CardContent className="grid p-0 md:grid-cols-2">
+            <form className="p-6 md:p-8" onSubmit={handleSubmit}>
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col items-center text-center">
+                  <h1 className="text-2xl font-bold text-white">Bienvenido de nuevo</h1>
+                  <p className="text-balance text-gray-400">
+                    Accede a tu cuenta de Edge Racing
+                  </p>
                 </div>
-              )}
 
-              <div className="grid gap-2">
-                <Label htmlFor="email" className="text-gray-300">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  className="bg-[color:var(--racing-black)] border-gray-700 text-white"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-gray-300">Contraseña</Label>
-                  <Link
-                    href="#"
-                    className="text-sm text-[color:var(--motogp-blue)] hover:underline ml-auto underline-offset-2"
-                  >
-                    ¿Olvidaste tu contraseña?
+                {error && (
+                  <div className="bg-red-900/70 text-white p-3 rounded-md text-sm">
+                    {error}
+                  </div>
+                )}
+
+                {success && (
+                  <div className="bg-green-900/70 text-white p-3 rounded-md text-sm">
+                    {success}
+                  </div>
+                )}
+
+                <div className="grid gap-2">
+                  <Label htmlFor="email" className="text-gray-300">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    required
+                    className="bg-[color:var(--racing-black)] border-gray-700 text-white"
+                    value={formData.email}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-gray-300">Contraseña</Label>
+                    <Link
+                      href="#"
+                      className="text-sm text-[color:var(--motogp-blue)] hover:underline ml-auto underline-offset-2"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Link>
+                  </div>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    className="bg-[color:var(--racing-black)] border-gray-700 text-white"
+                    value={formData.password}
+                    onChange={handleChange}
+                  />
+                </div>
+                <Button
+                  className="btn-gradient w-full"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Iniciando sesión...
+                    </span>
+                  ) : 'Iniciar sesión'}
+                </Button>
+                <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-gray-700">
+                  <span className="relative z-10 bg-[color:var(--racing-gray)]/80 px-2 text-gray-400">
+                    O continuar con
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  <Button variant="outline" className="w-full py-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="size-8">
+                      <path
+                        d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span className="sr-only">Login with Google</span>
+                  </Button>
+                </div>
+                <div className="text-center text-sm text-gray-400">
+                  ¿No tienes una cuenta?{" "}
+                  <Link href="/registro" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">
+                    Regístrate
                   </Link>
                 </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  className="bg-[color:var(--racing-black)] border-gray-700 text-white"
-                  value={formData.password}
-                  onChange={handleChange}
+              </div>
+            </form>
+            <div className="relative hidden bg-[color:var(--racing-black)] md:block">
+              <div className="absolute inset-0 h-full w-full object-cover overflow-hidden">
+                <img
+                  src="/images/login-bg.jpg"
+                  alt="Fondo de inicio de sesión"
+                  className="h-full w-full object-cover"
                 />
               </div>
-              <Button
-                className="btn-gradient w-full"
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Iniciando sesión...
-                  </span>
-                ) : 'Iniciar sesión'}
-              </Button>
-
-
-              <div className="text-center text-sm text-gray-400">
-                ¿No tienes una cuenta?{" "}
-                <Link href="/registro" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">
-                  Regístrate
-                </Link>
-              </div>
             </div>
-          </form>
-          <div className="relative hidden bg-[color:var(--racing-black)] md:block">
-            <div className="absolute inset-0 h-full w-full object-cover overflow-hidden">
-              <Image
-                width={500}
-                height={500}
-                src="/images/login-bg.jpg"
-                alt="Fondo de inicio de sesión"
-                className="h-full w-full object-cover"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      <div className="text-balance text-center text-xs text-gray-500">
-        Al hacer clic en continuar, aceptas nuestros <Link href="#" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">Términos de servicio</Link>{" "}
-        y <Link href="#" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">Política de privacidad</Link>.
-      </div>
-    </div>
-  );
-}
-
-// Aquí está la corrección principal: 
-// Exportar un componente de página por defecto que utilice el LoginForm
-export default function LoginPage() {
-  return (
-    <div className="min-h-screen w-full flex items-center justify-center px-4 py-12 bg-gradient-to-b from-[color:var(--racing-black)] to-[color:var(--f1-dark-blue)]/90 relative overflow-hidden">
-      {/* Elementos decorativos */}
-      <div className="absolute top-0 left-0 right-0 h-1 circuit-line"></div>
-      <div className="absolute bottom-0 left-0 right-0 h-1 circuit-line"></div>
-      <div className="absolute -top-20 -right-20 w-40 h-40 checkered-flag opacity-10"></div>
-
-      <div className="w-full max-w-4xl mx-auto z-10">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[color:var(--f1-red)] to-[color:var(--motogp-blue)]">
-            Edge Racing
-          </h1>
-          <p className="text-gray-400 mt-2">Plataforma de gestión para competiciones de motor</p>
+          </CardContent>
+        </Card>
+        <div className="text-balance text-center text-xs text-gray-500">
+          Al hacer clic en continuar, aceptas nuestros <Link href="#" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">Términos de servicio</Link>{" "}
+          y <Link href="#" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">Política de privacidad</Link>.
         </div>
-        <LoginForm />
       </div>
     </div>
   );

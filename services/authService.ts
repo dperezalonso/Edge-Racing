@@ -1,5 +1,4 @@
 // services/authService.ts
-
 import apiClient from './api';
 import { API_ENDPOINTS } from '../config/api';
 import { User } from '../types/models';
@@ -22,16 +21,7 @@ export interface AuthResponse {
   user: User;
 }
 
-// Configurar token de autenticación desde localStorage
-export const setupAuthFromLocalStorage = () => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
-    if (token) {
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
-  }
-};
-
+// Función para iniciar sesión
 export const login = async (data: LoginData): Promise<AuthResponse> => {
   try {
     const response = await apiClient.post(API_ENDPOINTS.auth.login, data);
@@ -41,9 +31,6 @@ export const login = async (data: LoginData): Promise<AuthResponse> => {
     if (authData.access_token && typeof window !== 'undefined') {
       localStorage.setItem('token', authData.access_token);
       localStorage.setItem('user', JSON.stringify(authData.user));
-      
-      // Configurar headers para futuras peticiones
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${authData.access_token}`;
     }
     
     return authData;
@@ -53,7 +40,8 @@ export const login = async (data: LoginData): Promise<AuthResponse> => {
   }
 };
 
-export const register = async (data: RegisterData): Promise<AuthResponse> => {
+// Función para registrar un nuevo usuario
+export const register = async (data: RegisterData): Promise<any> => {
   try {
     const response = await apiClient.post(API_ENDPOINTS.auth.register, data);
     return response.data;
@@ -63,6 +51,7 @@ export const register = async (data: RegisterData): Promise<AuthResponse> => {
   }
 };
 
+// Función para cerrar sesión
 export const logout = async (): Promise<void> => {
   try {
     // Solo hacer la petición si hay un token
@@ -70,11 +59,10 @@ export const logout = async (): Promise<void> => {
       await apiClient.post(API_ENDPOINTS.auth.logout);
     }
     
-    // Limpiar localStorage y headers
+    // Limpiar localStorage incluso si la petición falla
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      delete apiClient.defaults.headers.common['Authorization'];
     }
   } catch (error) {
     console.error('Error durante logout:', error);
@@ -82,7 +70,6 @@ export const logout = async (): Promise<void> => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      delete apiClient.defaults.headers.common['Authorization'];
     }
     throw error;
   }
@@ -94,7 +81,7 @@ export const isAuthenticated = (): boolean => {
   return localStorage.getItem('token') !== null;
 };
 
-// Obtener el usuario actual
+// Obtener el usuario actual desde localStorage
 export const getCurrentUser = (): User | null => {
   if (typeof window === 'undefined') return null;
   
@@ -105,5 +92,19 @@ export const getCurrentUser = (): User | null => {
     return JSON.parse(userString);
   } catch (e) {
     return null;
+  }
+};
+
+// Configurar el token de autenticación en el servicio API
+export const setupAuthFromLocalStorage = (): void => {
+  if (typeof window === 'undefined') return;
+  
+  const token = localStorage.getItem('token');
+  if (token) {
+    // Configurar headers para todas las peticiones
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    // Limpiar headers si no hay token
+    delete apiClient.defaults.headers.common['Authorization'];
   }
 };

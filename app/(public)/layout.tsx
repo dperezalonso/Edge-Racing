@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import UserNav from '@/components/nav/UserNav';
 
 export default function PublicLayout({
   children,
@@ -15,8 +16,8 @@ export default function PublicLayout({
             <span className="text-[color:var(--f1-red)]">Edge</span>
             <span>Racing</span>
           </Link>
-          <nav>
-            <ul className="flex items-center space-x-1 md:space-x-6">
+          <nav className="flex items-center">
+            <ul className="flex items-center space-x-1 md:space-x-6 mr-4">
               <li>
                 <Link href="/" className="py-2 px-3 hover:text-[color:var(--motogp-blue)] transition-colors">
                   Inicio
@@ -32,15 +33,8 @@ export default function PublicLayout({
                   Competiciones
                 </Link>
               </li>
-              <li className="ml-2">
-                <Link 
-                  href="/dashboard" 
-                  className="bg-[color:var(--f1-red)] hover:bg-[color:var(--f1-red)]/90 px-4 py-2 rounded text-sm md:text-base font-medium transition-all hover:shadow-lg hover:shadow-[color:var(--f1-red)]/20 uppercase tracking-wider"
-                >
-                  Dashboard
-                </Link>
-              </li>
             </ul>
+            <UserNav />
           </nav>
         </div>
       </header>

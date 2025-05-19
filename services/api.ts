@@ -9,6 +9,7 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  timeout: 10000, // 10 segundos máximo de espera
 });
 
 // Interceptor para añadir el token de autenticación a las peticiones
@@ -30,7 +31,9 @@ apiClient.interceptors.request.use(
 
 // Interceptor para manejar errores de autenticación
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
   (error) => {
     // Si recibimos un 401 (Unauthorized), limpiar el token
     if (error.response && error.response.status === 401) {
@@ -38,14 +41,43 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         
-        // Opcional: redirigir a la página de login
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
+        // Redirigir a la página de login si no estamos ya en ella
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/login' && currentPath !== '/registro') {
+          window.location.href = '/login?session_expired=true';
         }
       }
     }
+    
+    // Crear un mensaje de error más descriptivo
+    let errorMessage = 'Error en la solicitud';
+    
+    if (error.response) {
+      // El servidor respondió con un código de error
+      const serverError = error.response.data?.message || error.response.statusText;
+      errorMessage = `Error ${error.response.status}: ${serverError}`;
+    } else if (error.request) {
+      // La solicitud fue hecha pero no se recibió respuesta
+      errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+    }
+    
+    // Añadir información adicional al error
+    error.friendlyMessage = errorMessage;
+    
     return Promise.reject(error);
   }
 );
+
+// Función para comprobar la conexión con la API
+export const checkApiConnection = async (): Promise<boolean> => {
+  try {
+    // Intenta hacer una petición simple
+    await apiClient.get('/saludo');
+    return true;
+  } catch (error) {
+    console.error('Error al comprobar conexión con API:', error);
+    return false;
+  }
+};
 
 export default apiClient;
