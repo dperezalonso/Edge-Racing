@@ -77,24 +77,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     // Función para iniciar sesión
-    const handleLogin = async (email: string, password: string) => {
-        try {
-            setIsLoading(true);
-            setError(null);
+    // Versión modificada sin redirección
+const handleLogin = async (email: string, password: string) => {
+    try {
+        setIsLoading(true);
+        setError(null);
 
-            const response = await login({ email, password });
-            setUser(response.user);
-
-            // Redirigir al dashboard después de iniciar sesión
-            router.push('/dashboard');
-        } catch (error: any) {
-            console.error('Error de inicio de sesión:', error);
-            setError(error.response?.data?.message || 'Error al iniciar sesión');
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        const response = await login({ email, password });
+        setUser(response.user);
+        
+        // Eliminamos la redirección automática
+    } catch (error: any) {
+        console.error('Error de inicio de sesión:', error);
+        setError(error.response?.data?.message || 'Error al iniciar sesión');
+        throw error;
+    } finally {
+        setIsLoading(false);
+    }
+};
 
     // Función para cerrar sesión
     const handleLogout = async () => {
@@ -102,9 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsLoading(true);
             await logout();
             setUser(null);
-
-            // Redirigir a la página de inicio después de cerrar sesión
-            router.push('/');
+            
+            // Eliminamos la redirección automática
         } catch (error) {
             console.error('Error al cerrar sesión:', error);
         } finally {

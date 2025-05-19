@@ -76,7 +76,7 @@ export default function Dashboard() {
         // setTopDrivers(sortedDrivers);
         // setTopTeams(sortedTeams);
         setTotalTracks(tracksData.length);
-       
+
         setError(null);
 
       } catch (err) {
@@ -356,23 +356,14 @@ export default function Dashboard() {
                 <div key={index} className="bg-gray-900/60 rounded-lg p-4 border border-gray-800 hover:border-gray-700 transition-colors">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center">
-                      {competition.logo ? (
-                        <div className="w-10 h-10 rounded-full bg-white p-1 mr-3">
-                          
-                          <Image
-                            src={competition.logo}
-                            alt={competition.name}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      ) : (
-                        <div
-                          className="w-10 h-10 rounded-full mr-3 flex items-center justify-center text-white font-bold"
-                          style={{ backgroundColor: competition.color }}
-                        >
-                          {competition.name.charAt(0)}
-                        </div>
-                      )}
+
+                      <div
+                        className="w-10 h-10 rounded-full mr-3 flex items-center justify-center text-white font-bold"
+                        style={{ backgroundColor: competition.color }}
+                      >
+                        {competition.name.charAt(0)}
+                      </div>
+
                       <div>
                         <h3 className="font-bold">{competition.name}</h3>
                         <p className="text-xs text-gray-400">{competition.season}</p>

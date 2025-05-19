@@ -118,32 +118,18 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    setSuccess(null);
-
+  
     try {
       const response = await login({
         email: formData.email,
         password: formData.password
       });
-
+  
       console.log('Login exitoso:', response);
-      
-      // Guardar información del usuario en el localStorage para la sesión
-      if (response.user && response.access_token) {
-        localStorage.setItem('user', JSON.stringify(response.user));
-        localStorage.setItem('token', response.access_token);
-        
-        // Redirigir al dashboard después de un pequeño retraso
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 300);
-      }
+      // No redirigir automáticamente
     } catch (error: any) {
       console.error('Error al iniciar sesión:', error);
-      setError(
-        error.response?.data?.message || 
-        'Error al iniciar sesión. Por favor, verifica tus credenciales.'
-      );
+      setError(error.response?.data?.message || 'Error al iniciar sesión. Por favor, verifica tus credenciales.');
     } finally {
       setIsLoading(false);
     }
