@@ -2,147 +2,89 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { Driver } from '../../types/models';
 import apiClient from '@/services/api';
 import { API_ENDPOINTS } from '@/config/api';
-
-// Definimos la interfaz para Driver y la exportamos
-export interface Driver {
-  id: string;
-  first_name: string;
-  last_name: string;
-  birth_date: string;
-  birth_country: string;
-  vehicle_number: number;
-  profile_image: string | null;
-  active: boolean;
-  points: number;
-  team_id: string;
-  competition_id: string;
-  // Campos calculados/adicionales
-  position?: number;
-  wins?: number;
-  podiums?: number;
-  // Campos para UI
-  teamColor?: string;
-  team?: string; // Nombre del equipo
-  nationality?: string; // Alias para birth_country
-}
-
-// Key para almacenamiento en localStorage (solo para modo desarrollo)
-const STORAGE_KEY = 'edge_racing_drivers';
-
-// Mock data inicial (simulación para desarrollo)
-const initialDrivers: Driver[] = [
-  { 
-    id: "verstappen",
-    first_name: "Max",
-    last_name: "Verstappen",
-    birth_date: "1997-09-30",
-    birth_country: "NED",
-    vehicle_number: 1,
-    profile_image: "/images/drivers/verstappen.jpg",
-    active: true,
-    points: 280,
-    team_id: "redbull",
-    competition_id: "formula1",
-    // Campos calculados para UI
-    position: 1,
-    wins: 8,
-    podiums: 11,
-    teamColor: "#0600EF",
-    team: "Red Bull Racing",
-    nationality: "NED"
-  },
-  { 
-    id: "norris",
-    first_name: "Lando",
-    last_name: "Norris",
-    birth_date: "1999-11-13",
-    birth_country: "GBR",
-    vehicle_number: 4,
-    profile_image: "/images/drivers/norris.jpg",
-    active: true,
-    points: 219,
-    team_id: "mclaren",
-    competition_id: "formula1",
-    position: 2,
-    wins: 1,
-    podiums: 9,
-    teamColor: "#FF8700",
-    team: "McLaren",
-    nationality: "GBR"
-  },
-  // Más pilotos...
-];
 
 export function useDrivers() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
-  // Cargar datos desde la API o localStorage como fallback
-  useEffect(() => {
-    if (!isInitialized) {
-      const fetchDrivers = async () => {
-        try {
-          // Intentar obtener datos de la API
-          const response = await apiClient.get(API_ENDPOINTS.drivers);
-          console.log("Datos obtenidos de la API:", response.data);
-          
-          // Transformar los datos al formato esperado por la UI
-          const formattedDrivers = response.data.map((driver: any) => ({
-            ...driver,
-            // Crear campos derivados para compatibilidad con la UI
-            driver: `${driver.first_name} ${driver.last_name}`, // Campo calculado
-            nationality: driver.birth_country,
-          }));
-          
-          setDrivers(formattedDrivers);
-        } catch (error) {
-          console.error("Error al cargar pilotos desde API:", error);
-          
-          // Fallback a localStorage en modo desarrollo
-          try {
-            const storedData = localStorage.getItem(STORAGE_KEY);
-            if (storedData) {
-              console.log("Usando datos de localStorage como fallback");
-              setDrivers(JSON.parse(storedData));
-            } else {
-              console.log("Usando datos mock como fallback");
-              setDrivers(initialDrivers);
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDrivers));
-            }
-          } catch (localError) {
-            console.error("Error completo al cargar drivers:", localError);
-            setError('Error al cargar los pilotos');
-            setDrivers(initialDrivers);
-          }
-        } finally {
-          setLoading(false);
-          setIsInitialized(true);
-        }
-      };
+  // Cargar datos desde la API
+  const fetchDrivers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-      fetchDrivers();
-    }
-  }, [isInitialized]);
+      // Obtener datos de la API
+      const response = await apiClient.get(API_ENDPOINTS.drivers);
+      console.log("Pilotos cargados desde API:", response.data);
 
-  // Actualizar localStorage en desarrollo cuando cambian los drivers
-  useEffect(() => {
-    if (isInitialized && !loading && process.env.NODE_ENV === 'development') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(drivers));
+      // Transformar los datos para mantener compatibilidad con UI
+      const formattedDrivers = response.data.map((driver: any) => {
+        // Buscar información del equipo si es necesario (esto se haría de forma más eficiente con endpoints específicos)
+        return {
+          ...driver,
+          // Campos calculados para UI
+          driver: `${driver.first_name} ${driver.last_name}`, // Campo calculado para compatibilidad
+          nationality: driver.birth_country || driver.nationality || "N/A",
+          wins: driver.wins || 0,
+          podiums: driver.podiums || 0,
+          teamColor: driver.teamColor || getTeamColor(driver.team_id) || "#cccccc"
+        };
+      });
+
+      setDrivers(formattedDrivers);
+      setError(null);
+    } catch (error) {
+      console.error("Error al cargar pilotos:", error);
+      setError('Error al cargar los pilotos. Por favor, inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
     }
-  }, [drivers, loading, isInitialized]);
+  }, []);
+
+  // Función para obtener color del equipo (placeholder, ideal obtenerlo directamente de la API)
+  const getTeamColor = (teamId: string) => {
+    // Colores predefinidos para equipos conocidos
+    const teamColors: Record<string, string> = {
+      'redbull': '#0600EF',
+      'ferrari': '#DC0000',
+      'mercedes': '#00D2BE',
+      'mclaren': '#FF8700',
+      'astonmartin': '#006F62',
+      'ducat': '#FF0000',
+      'pramac': '#2596be',
+      'aprilia': '#41BFFF',
+      'gresini': '#56A0D3'
+    };
+
+    return teamColors[teamId] || null;
+  };
+
+  // Cargar datos al iniciar
+  useEffect(() => {
+    fetchDrivers();
+  }, [fetchDrivers]);
 
   // Obtener un piloto por ID
-  const getDriverById = useCallback((id: string) => {
-    console.log("Buscando piloto con ID:", id);
-    
-    const driver = drivers.find(driver => driver.id === id);
-    console.log("Piloto encontrado:", driver);
-    
+  const getDriverById = useCallback(async (id: string) => {
+    // Primero, buscar en el array de drivers local
+    let driver = drivers.find(driver => driver.id === id);
+
+    // Si no lo encuentra en local, hacer una llamada a la API
+    if (!driver) {
+      try {
+        const response = await apiClient.get(`/driver/show/${id}`);
+        driver = response.data;
+      } catch (error) {
+        console.error('Error al obtener detalles del piloto:', error);
+        return null;
+      }
+    }
+
     return driver || null;
   }, [drivers]);
 
@@ -154,57 +96,66 @@ export function useDrivers() {
   // Añadir un nuevo piloto
   const addDriver = useCallback(async (driver: Omit<Driver, 'id'>) => {
     try {
-      // Usar el endpoint correcto para crear un nuevo driver
-      const response = await apiClient.post(API_ENDPOINTS.driverNew, driver);
-      const newDriver = response.data;
-      
-      setDrivers(prevDrivers => [...prevDrivers, newDriver]);
-      console.log("Piloto añadido:", newDriver);
+      // Preparar datos para la API
+      const apiData = {
+        ...driver,
+        points: driver.points || 0,
+        active: driver.active !== undefined ? driver.active : true,
+        // Asegurar que los campos requeridos tienen valores
+        birth_date: driver.birth_date || new Date().toISOString().slice(0, 10)
+      };
+
+      // Enviar a la API
+      const response = await apiClient.post(API_ENDPOINTS.driverNew, apiData);
+      console.log("Piloto añadido:", response.data);
+
+      // Actualizar state
+      await fetchDrivers(); // Mejor recargar todos los datos 
       router.refresh();
-      return newDriver;
+
+      return response.data;
     } catch (error) {
       console.error("Error al añadir piloto:", error);
       setError('Error al añadir el piloto');
       throw error;
     }
-  }, [router]);
+  }, [fetchDrivers, router]);
 
   // Actualizar un piloto existente
   const updateDriver = useCallback(async (id: string, updatedData: Partial<Driver>) => {
     try {
       // Enviar a la API
-      const response = await apiClient.put(`${API_ENDPOINTS.drivers}/${id}`, updatedData);
-      const updatedDriver = response.data;
-      
-      setDrivers(prevDrivers => {
-        return prevDrivers.map(driver => 
-          driver.id === id ? { ...driver, ...updatedDriver } : driver
-        );
-      });
-      
+      const response = await apiClient.post(API_ENDPOINTS.driverEdit(id), updatedData);
+      console.log("Piloto actualizado:", response.data);
+
+      // Actualizar state
+      await fetchDrivers(); // Mejor recargar todos los datos
       router.refresh();
-      return updatedDriver;
+
+      return response.data;
     } catch (error) {
       console.error("Error al actualizar piloto:", error);
       setError('Error al actualizar el piloto');
       throw error;
     }
-  }, [router]);
+  }, [fetchDrivers, router]);
 
   // Eliminar un piloto
   const deleteDriver = useCallback(async (id: string) => {
     try {
       // Enviar a la API
-      await apiClient.delete(`${API_ENDPOINTS.drivers}/${id}`);
-      
-      setDrivers(prevDrivers => prevDrivers.filter(driver => driver.id !== id));
+      await apiClient.get(API_ENDPOINTS.driverDelete(id));
+      console.log("Piloto eliminado con ID:", id);
+
+      // Actualizar state
+      await fetchDrivers(); // Mejor recargar todos los datos
       router.refresh();
     } catch (error) {
       console.error("Error al eliminar piloto:", error);
       setError('Error al eliminar el piloto');
       throw error;
     }
-  }, [router]);
+  }, [fetchDrivers, router]);
 
   return {
     drivers,
@@ -214,6 +165,9 @@ export function useDrivers() {
     getDriversByCompetition,
     addDriver,
     updateDriver,
-    deleteDriver
+    deleteDriver,
+    refreshDrivers: fetchDrivers
   };
 }
+
+export type { Driver };

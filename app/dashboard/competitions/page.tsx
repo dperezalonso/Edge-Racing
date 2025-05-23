@@ -1,11 +1,16 @@
 'use client';
 
-import { useCompetitions } from '@/lib/hooks/useCompetitions';
+import { useCompetitions } from "@/lib/hooks/useCompetitions";
 import DataTable from '@/components/crud/DataTable';
-// import Image from 'next/image';
+import { useEffect } from "react";
 
 export default function CompetitionsPage() {
-  const { competitions, loading, error, deleteCompetition } = useCompetitions();
+  const { competitions, loading, error, deleteCompetition, refreshCompetitions } = useCompetitions();
+
+  // Recargar datos al montar el componente
+  useEffect(() => {
+    refreshCompetitions();
+  }, [refreshCompetitions]);
 
   // Definir columnas para la tabla de competiciones
   const columns = [
@@ -23,14 +28,15 @@ export default function CompetitionsPage() {
       ) 
     },
     { key: 'description', label: 'Descripción' },
+    { key: 'status', label: 'Estado' },
     { key: 'season', label: 'Temporada' },
     { 
-      key: 'logo', 
+      key: 'image', 
       label: 'Logo',
       render: (item: any) => (
-        item.logo ? (
+        item.image ? (
           <div className="w-8 h-8 bg-white p-1 rounded-full">
-            {/* <Image src={item.logo} alt={item.name} className="w-full h-full object-contain" /> */}
+            <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
           </div>
         ) : (
           <div 
@@ -56,6 +62,12 @@ export default function CompetitionsPage() {
     return (
       <div className="bg-red-900/50 border border-red-800 rounded-md p-4 text-red-300">
         {error}
+        <button 
+          onClick={refreshCompetitions} 
+          className="ml-4 bg-red-800 hover:bg-red-700 px-3 py-1 rounded-md text-white text-sm"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }

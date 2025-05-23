@@ -10,36 +10,36 @@ export default function EditTeamPage() {
   const params = useParams();
   const teamId = params.id as string;
   const router = useRouter();
-  const { teams, getTeamById, updateTeam } = useTeams();
-  const { competitions } = useCompetitions();
+  const { teams, loading, getTeamById, updateTeam, refreshTeams } = useTeams();
+  const { competitions, loading: competitionsLoading } = useCompetitions();
   const [team, setTeam] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [formLoading, setFormLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [competitionOptions, setCompetitionOptions] = useState<{ label: string; value: string }[]>([]);
 
   // Cargar datos del equipo
   useEffect(() => {
-    // Depuración - Imprimir información para diagnóstico
-    console.log("Intentando obtener equipo con ID:", teamId);
-    console.log("Equipos disponibles:", teams);
-    
-    try {
-      const teamData = getTeamById(teamId);
-      console.log("Resultado de getTeamById:", teamData);
-      
-      if (teamData) {
-        setTeam(teamData);
-      } else {
-        setError('Equipo no encontrado. Verifica el ID en la URL.');
-        console.error("No se encontró el equipo con ID:", teamId);
+    const fetchTeam = async () => {
+      try {
+        setFormLoading(true);
+        const foundTeam = await getTeamById(teamId);
+
+        if (foundTeam) {
+          setTeam(foundTeam);
+          // Cualquier lógica adicional de inicialización
+        } else {
+          setError('Equipo no encontrado. Verifica el ID en la URL.');
+        }
+      } catch (err) {
+        console.error("Error al obtener el equipo:", err);
+        setError(`Error al cargar el equipo: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+      } finally {
+        setFormLoading(false);
       }
-    } catch (err) {
-      console.error("Error al obtener el equipo:", err);
-      setError(`Error al cargar el equipo: ${err instanceof Error ? err.message : 'Error desconocido'}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [teamId, getTeamById, teams]);
+    };
+
+    fetchTeam();
+  }, [teamId, getTeamById]);
 
   // Preparar opciones para selectores
   useEffect(() => {
@@ -54,29 +54,42 @@ export default function EditTeamPage() {
 
   // Definir campos para el formulario
   const fields = [
-    { name: 'team', label: 'Nombre del Equipo', type: 'text', required: true },
-    { 
-      name: 'competitionId', 
-      label: 'Competición', 
-      type: 'select', 
+    { name: 'name', label: 'Nombre del Equipo', type: 'text', required: true },
+    { name: 'country', label: 'País', type: 'text', required: true },
+    { name: 'principal', label: 'Director del Equipo', type: 'text', required: true },
+    {
+      name: 'competition_id',
+      label: 'Competición',
+      type: 'select',
       required: true,
       options: competitionOptions
     },
-    { name: 'color', label: 'Color', type: 'color', required: true },
-    { name: 'position', label: 'Posición', type: 'number', required: true },
     { name: 'points', label: 'Puntos', type: 'number', required: true },
-    { name: 'wins', label: 'Victorias', type: 'number', required: true },
-    { name: 'podiums', label: 'Podios', type: 'number', required: true },
+    { name: 'description', label: 'Descripción', type: 'textarea', required: false },
+    { name: 'logo', label: 'URL del Logo', type: 'text', required: false },
+    { name: 'color', label: 'Color', type: 'color', required: true },
   ];
 
+  // Función para manejar el envío del formulario
   const handleSubmit = useCallback(async (data: any) => {
-    console.log("Enviando datos para actualizar:", data);
-    const result = await updateTeam(teamId, data);
-    console.log("Resultado de la actualización:", result);
-    return result;
+    try {
+      // Preparar datos para la API
+      const teamData = {
+        ...data,
+        // Convertir puntos a número
+        points: parseInt(data.points, 10) || 0
+      };
+
+      // Enviar a la API
+      const result = await updateTeam(teamId, teamData);
+      return result;
+    } catch (error) {
+      console.error("Error al actualizar equipo:", error);
+      throw error;
+    }
   }, [teamId, updateTeam]);
 
-  if (loading) {
+  if (loading || competitionsLoading || formLoading) {
     return (
       <div className="flex justify-center items-center h-32">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
@@ -90,7 +103,7 @@ export default function EditTeamPage() {
         <div className="bg-red-900/50 border border-red-800 rounded-md p-4 text-red-300 mb-4">
           {error}
         </div>
-        <button 
+        <button
           onClick={() => router.push('/dashboard/teams')}
           className="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded"
         >
@@ -114,7 +127,7 @@ export default function EditTeamPage() {
       <div className="bg-yellow-900/50 border border-yellow-800 rounded-md p-4 text-yellow-300 mb-4">
         No se pudo cargar la información del equipo. Por favor, vuelve a intentarlo.
       </div>
-      <button 
+      <button
         onClick={() => router.push('/dashboard/teams')}
         className="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded"
       >

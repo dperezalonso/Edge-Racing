@@ -43,10 +43,7 @@ export default function DashboardLayout({
         </header>
 
         <main className="flex-1 overflow-y-auto p-6 md:p-6 relative">
-          {/* Mensaje de desarrollo */}
-          <div className="mb-4 bg-yellow-700/30 border border-yellow-600 text-yellow-200 p-3 rounded-md text-sm">
-            ⚠️ Modo desarrollo: Verificación de autenticación desactivada temporalmente
-          </div>
+ 
           
           {children}
         </main>

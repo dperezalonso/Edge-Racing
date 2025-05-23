@@ -77,8 +77,10 @@ export const logout = async (): Promise<void> => {
 
 // Verificar si el usuario está autenticado
 export const isAuthenticated = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  return localStorage.getItem('token') !== null;
+    if (typeof window === 'undefined') return false;
+  console.log(localStorage.getItem('token'));
+  console.log("AAAAAAAAAAAAAAA");
+    return localStorage.getItem('token') !== null;
 };
 
 // Obtener el usuario actual desde localStorage

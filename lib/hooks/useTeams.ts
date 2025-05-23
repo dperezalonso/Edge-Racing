@@ -2,25 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { Team } from '../../types/models';
 import apiClient from '@/services/api';
-
-// Define la interfaz para Team (ajustada para coincidir con la API)
-export interface Team {
-  id: string;
-  name: string;
-  country: string;
-  principal: string;
-  logo: string | null;
-  points: number;
-  description: string;
-  competition_id: string;
-  // Campos adicionales para UI
-  position?: number;
-  wins?: number;
-  podiums?: number;
-  color?: string;
-  team?: string; // Alias para name, para compatibilidad con componentes existentes
-}
+import { API_ENDPOINTS } from '@/config/api';
 
 export function useTeams() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -28,49 +12,35 @@ export function useTeams() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Cargar datos de la API
+  // Cargar datos desde la API
   const fetchTeams = useCallback(async () => {
-    setLoading(true);
     try {
-      // Obtener datos de la API - ajusta según la estructura de tus endpoints
-      const response = await apiClient.get('/team/list'); // Usar directamente la ruta de la API
+      setLoading(true);
+      setError(null);
+      
+      // Obtener datos de la API
+      const response = await apiClient.get(API_ENDPOINTS.teams);
       console.log('Equipos cargados desde API:', response.data);
       
       // Transformar datos para compatibilidad con UI
       const formattedTeams = response.data.map((team: any) => ({
         ...team,
-        // Asegurar que team existe como alias de name para compatibilidad
-        team: team.name 
+        // Campos adicionales para compatibilidad con UI
+        team: team.name, // Asegurar que team existe como alias de name
+        color: team.color || getRandomColor(team.name), // Generar color si no tiene
+        wins: team.wins || 0,
+        podiums: team.podiums || 0,
+        // Asegurar que todos los campos tengan valores predeterminados
+        logo: team.logo || null,
+        principal: team.principal || "Sin director",
+        country: team.country || "Desconocido"
       }));
       
       setTeams(formattedTeams);
       setError(null);
-    } catch (err) {
-      console.error('Error al cargar equipos:', err);
-      setError('Error al cargar los equipos');
-      
-      // En desarrollo, puedes usar datos mock si la API falla
-      if (process.env.NODE_ENV === 'development') {
-        const mockTeams = [
-          {
-            id: "redbull",
-            name: "Red Bull Racing",
-            country: "Austria",
-            principal: "Christian Horner",
-            logo: "/images/teams/redbull.png",
-            points: 423,
-            description: "Equipo oficial de Red Bull en Formula 1",
-            competition_id: "formula1",
-            position: 1,
-            wins: 8,
-            podiums: 13,
-            color: "#0600EF",
-            team: "Red Bull Racing" // Alias para name
-          },
-          // Más equipos mock...
-        ];
-        setTeams(mockTeams);
-      }
+    } catch (error) {
+      console.error('Error al cargar equipos:', error);
+      setError('Error al cargar los equipos. Por favor, inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -82,24 +52,48 @@ export function useTeams() {
   }, [fetchTeams]);
 
   // Obtener un equipo por ID
-  const getTeamById = useCallback((id: string) => {
-    // Buscar en el estado local en lugar de hacer otra solicitud
-    return teams.find(team => team.id === id) || null;
+  const getTeamById = useCallback(async (id: string) => {
+    // Primero, buscar en el array de teams local
+    let team = teams.find(team => team.id === id);
+    
+    // Si no lo encuentra en local, hacer una llamada a la API
+    if (!team) {
+      try {
+        const response = await apiClient.get(`/team/show/${id}`);
+        team = response.data;
+      } catch (error) {
+        console.error('Error al obtener detalles del equipo:', error);
+        return null;
+      }
+    }
+    
+    return team || null;
   }, [teams]);
-
+  
   // Filtrar equipos por competición
   const getTeamsByCompetition = useCallback((competitionId: string) => {
-    // Usar competition_id (no competitionId)
     return teams.filter(team => team.competition_id === competitionId);
   }, [teams]);
 
   // Añadir un nuevo equipo
   const addTeam = useCallback(async (team: Omit<Team, 'id'>) => {
     try {
-      const response = await apiClient.post('/team/new', team);
+      // Preparar datos para la API
+      const apiData = {
+        ...team,
+        points: team.points || 0,
+        wins: team.wins || 0,
+        podiums: team.podiums || 0
+      };
+      
+      // Enviar a la API
+      const response = await apiClient.post(API_ENDPOINTS.teamNew, apiData);
       console.log("Equipo añadido:", response.data);
-      await fetchTeams(); // Actualizar la lista
+      
+      // Actualizar state
+      await fetchTeams(); // Mejor recargar todos los datos
       router.refresh();
+      
       return response.data;
     } catch (error) {
       console.error("Error al añadir equipo:", error);
@@ -111,10 +105,14 @@ export function useTeams() {
   // Actualizar un equipo existente
   const updateTeam = useCallback(async (id: string, updatedData: Partial<Team>) => {
     try {
-      const response = await apiClient.post(`/team/edit/${id}`, updatedData);
+      // Enviar a la API
+      const response = await apiClient.post(API_ENDPOINTS.teamEdit(id), updatedData);
       console.log("Equipo actualizado:", response.data);
-      await fetchTeams(); // Actualizar la lista
+      
+      // Actualizar state
+      await fetchTeams(); // Mejor recargar todos los datos
       router.refresh();
+      
       return response.data;
     } catch (error) {
       console.error("Error al actualizar equipo:", error);
@@ -126,9 +124,12 @@ export function useTeams() {
   // Eliminar un equipo
   const deleteTeam = useCallback(async (id: string) => {
     try {
-      await apiClient.get(`/team/delete/${id}`);
+      // Enviar a la API
+      await apiClient.get(API_ENDPOINTS.teamDelete(id), { params: { id } });
       console.log("Equipo eliminado con ID:", id);
-      await fetchTeams(); // Actualizar la lista
+      
+      // Actualizar state
+      await fetchTeams(); // Mejor recargar todos los datos
       router.refresh();
     } catch (error) {
       console.error("Error al eliminar equipo:", error);
@@ -136,6 +137,22 @@ export function useTeams() {
       throw error;
     }
   }, [fetchTeams, router]);
+
+  // Función para generar un color aleatorio basado en el nombre del equipo
+  const getRandomColor = (name: string) => {
+    // Generar un color basado en el nombre para mantener consistencia
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const c = (hash & 0x00FFFFFF)
+      .toString(16)
+      .toUpperCase()
+      .padStart(6, '0');
+    
+    return "#" + c;
+  };
 
   return {
     teams,
@@ -149,3 +166,5 @@ export function useTeams() {
     refreshTeams: fetchTeams
   };
 }
+
+export type { Team };

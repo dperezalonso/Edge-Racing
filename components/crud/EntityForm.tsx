@@ -13,6 +13,7 @@ interface Field {
   type: string;
   required?: boolean;
   options?: { label: string; value: string }[];
+  onChange?: (value: string) => void; // Añadido para manejar cambios en selects
 }
 
 interface EntityFormProps {
@@ -43,7 +44,7 @@ export default function EntityForm({
     if (!isInitialized) {
       const data: any = {};
       fields.forEach((field) => {
-        data[field.name] = initialData[field.name] || (field.type === 'color' ? '#ffffff' : '');
+        data[field.name] = initialData[field.name] !== undefined ? initialData[field.name] : (field.type === 'color' ? '#ffffff' : '');
       });
       setFormData(data);
       setIsInitialized(true);
@@ -52,10 +53,18 @@ export default function EntityForm({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
+    
+    // Actualizar el formData
     setFormData({
       ...formData,
       [name]: type === 'number' ? parseFloat(value) : value,
     });
+    
+    // Buscar si este campo tiene una función onChange para ejecutar
+    const field = fields.find(f => f.name === name);
+    if (field && field.onChange) {
+      field.onChange(value);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,14 +73,27 @@ export default function EntityForm({
     setError(null);
 
     try {
-      await onSubmit(formData);
+      console.log("Enviando datos:", formData);
+      
+      // Convertir any boolean/checkbox to actual boolean values
+      const processedData = { ...formData };
+      fields.forEach((field) => {
+        if (field.type === 'checkbox') {
+          processedData[field.name] = processedData[field.name] === 'true' || processedData[field.name] === true;
+        }
+      });
+      
+      await onSubmit(processedData);
       router.push(`/dashboard/${entityPath}`);
-    } catch (error) {
-      if (error instanceof Error) {
+    } catch (error: any) {
+      if (error.response && error.response.data && error.response.data.message) {
+        setError(error.response.data.message);
+      } else if (error instanceof Error) {
         setError(error.message);
       } else {
         setError('Ha ocurrido un error al guardar los datos');
       }
+      console.error("Error al enviar el formulario:", error);
       setIsSubmitting(false);
     }
   };
@@ -144,6 +166,39 @@ export default function EntityForm({
                       placeholder="#000000"
                     />
                   </div>
+                ) : field.type === 'checkbox' ? (
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={field.name}
+                      name={field.name}
+                      checked={formData[field.name] === true}
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          [field.name]: e.target.checked,
+                        });
+                      }}
+                      className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-[color:var(--f1-red)]"
+                    />
+                    <label htmlFor={field.name} className="ml-2 text-sm text-gray-400">
+                      {field.label}
+                    </label>
+                  </div>
+                ) : field.type === 'textarea' ? (
+                  <textarea
+                    id={field.name}
+                    name={field.name}
+                    value={formData[field.name] || ''}
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        [field.name]: e.target.value,
+                      });
+                    }}
+                    required={field.required}
+                    className="bg-gray-900 border border-gray-700 text-white rounded-md w-full p-2 min-h-[100px]"
+                  />
                 ) : (
                   <Input
                     type={field.type}

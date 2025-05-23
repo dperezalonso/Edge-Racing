@@ -1,5 +1,51 @@
+// // 
+// // config/api.ts
+// // export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+// // export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://172.16.206.6:8000/api';
+// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://www.edgeracing.net.mialias.net/EdgeBack/public/index.php/api';
+
+
+// // Configuración de autenticación
+// export const API_CONFIG = {
+//   // Credenciales para acceso a la API (del servidor)
+//   USERNAME: process.env.API_USERNAME,
+//   PASSWORD: process.env.API_PASSWORD,
+//   TOKEN: process.env.API_TOKEN,
+  
+//   // Configuración de timeouts
+//   TIMEOUT: 10000,
+  
+//   // Headers por defecto
+//   DEFAULT_HEADERS: {
+//     'Content-Type': 'application/json',
+//     'Accept': 'application/json',
+//   }
+// };
+
+
+
+
 // config/api.ts
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://172.16.206.6:8000/api';
+export const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'http://www.edgeracing.net.mialias.net/EdgeBack/public/index.php/api'
+  : '/api'; // Usar proxy de Next.js en desarrollo
+
+// Configuración de autenticación
+export const API_CONFIG = {
+  // Credenciales para acceso a la API (del servidor)
+  USERNAME: process.env.API_USERNAME,
+  PASSWORD: process.env.API_PASSWORD,
+  TOKEN: process.env.API_TOKEN,
+  
+  // Configuración de timeouts
+  TIMEOUT: 100000,
+  
+  // Headers por defecto
+  DEFAULT_HEADERS: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  }
+};
 
 // Endpoints actualizados según las rutas de la API de Laravel
 export const API_ENDPOINTS = {
@@ -63,6 +109,9 @@ export const API_ENDPOINTS = {
   userDelete: (id: string) => `/user/delete/${id}`,
   userShow: (id: string) => `/user/show/${id}`,
 
-  teamsDrivers: '/team/drivers',
+  // Endpoint de pilotos por equipo
+  teamsDrivers: '/teams/drivers',
 
+  // Endpoint de prueba
+  test: '/saludo'
 };

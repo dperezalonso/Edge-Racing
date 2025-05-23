@@ -428,74 +428,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Carreras próximas y circuitos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Próximas Carreras</h2>
-              <Link
-                href="/dashboard/races"
-                className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
-              >
-                <span>Ver calendario</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            <div className="text-center py-4">
-              <p className="text-gray-400">
-                Próximamente: Calendario de carreras
-              </p>
-              <Link
-                href="/dashboard/races/add"
-                className="inline-flex items-center text-green-400 hover:text-green-300 bg-green-400/10 hover:bg-green-400/20 py-2 px-4 rounded-md mt-4 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Añadir carrera
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Circuitos</h2>
-              <Link
-                href="/dashboard/tracks"
-                className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
-              >
-                <span>Ver todos</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            <div className="text-center py-4">
-              <p className="text-gray-400">
-                {totalTracks > 0
-                  ? `${totalTracks} circuitos registrados en la base de datos.`
-                  : 'No hay circuitos registrados actualmente.'}
-              </p>
-              <Link
-                href="/dashboard/tracks/add"
-                className="inline-flex items-center text-yellow-400 hover:text-yellow-300 bg-yellow-400/10 hover:bg-yellow-400/20 py-2 px-4 rounded-md mt-4 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Añadir circuito
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+     
     </section>
   );
 }

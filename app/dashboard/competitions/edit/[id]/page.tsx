@@ -9,67 +9,74 @@ export default function EditCompetitionPage() {
   const params = useParams();
   const competitionId = params.id as string;
   const router = useRouter();
-  const { competitions, loading: competitionsLoading, getCompetitionById, updateCompetition } = useCompetitions();
+  const { competitions, loading, getCompetitionById, updateCompetition, refreshCompetitions } = useCompetitions();
   const [competition, setCompetition] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [formLoading, setFormLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Esperar a que las competiciones se carguen antes de buscar por ID
+  // Cargar datos de la competición
   useEffect(() => {
-    // Solo ejecutar cuando las competiciones estén cargadas
-    if (!competitionsLoading && competitions.length > 0) {
-      console.log("Competiciones cargadas, intentando obtener competición con ID:", competitionId);
-      console.log("Competiciones disponibles:", competitions);
-      
+    const fetchCompetition = async () => {
       try {
-        const competitionData = getCompetitionById(competitionId);
-        console.log("Resultado de getCompetitionById:", competitionData);
-        
-        if (competitionData) {
-          setCompetition(competitionData);
+        setFormLoading(true);
+        const foundCompetition = await getCompetitionById(competitionId);
+
+        if (foundCompetition) {
+          setCompetition(foundCompetition);
+          // Cualquier lógica adicional de inicialización
         } else {
           setError('Competición no encontrada. Verifica el ID en la URL.');
-          console.error("No se encontró la competición con ID:", competitionId);
-          console.error("IDs disponibles:", competitions.map(c => c.id));
         }
       } catch (err) {
         console.error("Error al obtener la competición:", err);
         setError(`Error al cargar la competición: ${err instanceof Error ? err.message : 'Error desconocido'}`);
       } finally {
-        setLoading(false);
+        setFormLoading(false);
       }
-    } else if (!competitionsLoading && competitions.length === 0) {
-      // Si no hay competiciones después de cargar
-      setError('No hay competiciones disponibles para editar.');
-      setLoading(false);
-    }
-    // No cambiar loading si aún estamos cargando las competiciones
-  }, [competitionId, getCompetitionById, competitions, competitionsLoading]);
+    };
+
+    fetchCompetition();
+  }, [competitionId, getCompetitionById]);
 
   // Definir campos para el formulario
   const fields = [
     { name: 'name', label: 'Nombre de la Competición', type: 'text', required: true },
     { name: 'description', label: 'Descripción', type: 'text', required: true },
     { name: 'season', label: 'Temporada', type: 'text', required: true },
-    { name: 'logo', label: 'URL del Logo', type: 'text', required: false },
+    { name: 'image', label: 'URL del Logo', type: 'text', required: false },
+    {
+      name: 'status', label: 'Estado', type: 'select', required: true,
+      options: [
+        { label: 'Activo', value: 'ongoing' },
+        { label: 'Terminado', value: 'finished' },
+        { label: 'Próximamente', value: 'upcoming' }
+      ]
+    },
     { name: 'color', label: 'Color', type: 'color', required: true },
   ];
 
+  // Función para manejar el envío del formulario
   const handleSubmit = useCallback(async (data: any) => {
-    console.log("Enviando datos para actualizar:", data);
     try {
-      // Usando try/catch para manejar errores en la actualización
-      const result = await updateCompetition(competitionId, data);
-      console.log("Resultado de la actualización:", result);
+      // Preparar datos para la API
+      const competitionData = {
+        ...data,
+        // Asegúrate de que todos los campos estén presentes
+        name: data.name.trim(),
+        description: data.description.trim(),
+        status: data.status || 'active'
+      };
+
+      // Enviar a la API
+      const result = await updateCompetition(competitionId, competitionData);
       return result;
     } catch (error) {
-      console.error("Error al actualizar:", error);
+      console.error("Error al actualizar competición:", error);
       throw error;
     }
   }, [competitionId, updateCompetition]);
 
-  // Mostrar indicador de carga mientras las competiciones se están cargando
-  if (competitionsLoading || (loading && competitions.length > 0)) {
+  if (loading || formLoading) {
     return (
       <div className="flex justify-center items-center h-32">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
@@ -84,20 +91,11 @@ export default function EditCompetitionPage() {
           {error}
         </div>
         <div className="flex space-x-4">
-          <button 
+          <button
             onClick={() => router.push('/dashboard/competitions')}
             className="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded"
           >
             Volver a la lista de competiciones
-          </button>
-          <button 
-            onClick={() => {
-              console.log("IDs disponibles:", competitions.map(c => ({id: c.id, name: c.name})));
-              alert(`IDs disponibles: ${competitions.map(c => c.id).join(', ')}`);
-            }}
-            className="bg-blue-800 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
-          >
-            Mostrar IDs disponibles
           </button>
         </div>
       </div>
@@ -118,7 +116,7 @@ export default function EditCompetitionPage() {
       <div className="bg-yellow-900/50 border border-yellow-800 rounded-md p-4 text-yellow-300 mb-4">
         No se pudo cargar la información de la competición. Por favor, vuelve a intentarlo.
       </div>
-      <button 
+      <button
         onClick={() => router.push('/dashboard/competitions')}
         className="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded"
       >

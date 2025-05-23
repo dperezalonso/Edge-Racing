@@ -1,37 +1,52 @@
 "use client";
 
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
 
 export default function PilotClassification({
   drivers,
-  teams // Añadir teams como prop
+  teams
 }: {
   drivers: any[];
   competitionId: string;
-  teams: any[]; // Definir el tipo para teams
+  teams: any[];
 }) {
-  const [sort] = useState<"position" | "points" | "wins">("position");
+  // Cambiamos el valor predeterminado a "points"
+  const [sort, setSort] = useState<"points">("points");
+  const [sortedDrivers, setSortedDrivers] = useState<any[]>([]);
 
   // Función para obtener información del equipo por ID
   const getTeamInfo = (teamId: number | string) => {
     const team = teams.find((t) => t.id === teamId);
     return {
-      name: team?.team || "Equipo desconocido",
+      name: team?.team || team?.name || "Equipo desconocido",
       color: team?.color || getDefaultTeamColor(teamId)
     };
   };
 
-  // Ordenar pilotos según el criterio seleccionado
-  const sortedDrivers = [...drivers].sort((a, b) => {
-    if (sort === "position") return (a.position || 0) - (b.position || 0);
-    if (sort === "points") return (b.points || 0) - (a.points || 0);
-    if (sort === "wins") return (b.wins || 0) - (a.wins || 0);
-    return 0;
-  });
+  // Usar useEffect para actualizar los pilotos ordenados cuando cambien los datos o el criterio de ordenación
+  useEffect(() => {
+    // Función para ordenar pilotos
+    const orderDrivers = () => {
+      // Crear una copia para ordenar
+      const ordered = [...drivers].sort((a, b) => {
+        if (sort === "points") return (b.points || 0) - (a.points || 0);
+       return 0;
+      });
 
+      // Asignar posiciones actualizadas según el criterio de ordenación
+      return ordered.map((driver, index) => ({
+        ...driver,
+        calculatedPosition: index + 1
+      }));
+    };
+
+    // Aplicar la ordenación
+    setSortedDrivers(orderDrivers());
+  }, [drivers, sort]);
+
+ 
   // Si no hay datos
-  if (sortedDrivers.length === 0) {
+  if (drivers.length === 0) {
     return (
       <div className="p-6 bg-gray-800/50 rounded-lg text-center">
         <p className="text-gray-400">
@@ -45,7 +60,6 @@ export default function PilotClassification({
     <div className="overflow-hidden">
       <div className="flex justify-between mb-4">
         <h3 className="text-xl font-bold">Clasificación de Pilotos</h3>
-     
       </div>
 
       <div className="overflow-x-auto">
@@ -80,7 +94,10 @@ export default function PilotClassification({
                 "---";
 
               // Obtener información del equipo por ID
-              const teamInfo = getTeamInfo(driver.team);
+              const teamInfo = getTeamInfo(driver.team_id || driver.team);
+
+              // Usar la posición calculada o la original
+              const displayPosition = driver.calculatedPosition || driver.position || index + 1;
 
               return (
                 <tr
@@ -88,11 +105,12 @@ export default function PilotClassification({
                   className="bg-gray-900/50 hover:bg-gray-800/70 transition-colors"
                 >
                   <td className="px-4 py-3">
-                    <div className={`size-8 rounded-full flex items-center justify-center font-bold text-sm ${(driver.position || index + 1) <= 3
-                        ? `${positionColorClass(driver.position || index + 1)} text-black`
+                    <div className={`size-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                      displayPosition <= 3
+                        ? `${positionColorClass(displayPosition)} text-black`
                         : "bg-gray-800"
-                      }`}>
-                      {driver.position || index + 1}
+                    }`}>
+                      {displayPosition}
                     </div>
                   </td>
                   <td className="px-4 py-3 font-medium">

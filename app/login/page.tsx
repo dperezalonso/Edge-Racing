@@ -103,6 +103,7 @@ export default function LoginPage() {
     // Verificar si hay que mostrar un mensaje de sesión cerrada
     if (searchParams.get('logout') === 'true') {
       setSuccess('Has cerrado sesión correctamente.');
+      router.replace('/login'); // Redirigir a la página de inicio de sesión
     }
   }, [searchParams]);
 
@@ -126,7 +127,7 @@ export default function LoginPage() {
       });
   
       console.log('Login exitoso:', response);
-      // No redirigir automáticamente
+      router.push('/dashboard'); // Redirigir a la página principal después de iniciar sesión
     } catch (error: any) {
       console.error('Error al iniciar sesión:', error);
       setError(error.response?.data?.message || 'Error al iniciar sesión. Por favor, verifica tus credenciales.');

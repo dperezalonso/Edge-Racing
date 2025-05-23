@@ -29,6 +29,7 @@ export default function DataTable({
     const [activeFilter, setActiveFilter] = useState<string | null>(null);
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Este efecto inicializa filteredData una vez con los datos recibidos
     useEffect(() => {
@@ -49,11 +50,20 @@ export default function DataTable({
         setIsModalOpen(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (itemToDelete) {
-            onDelete(itemToDelete);
-            setIsModalOpen(false);
-            setItemToDelete(null);
+            setIsDeleting(true);
+            try {
+                await onDelete(itemToDelete);
+                setFilteredData(prevData => prevData.filter(item => item.id !== itemToDelete));
+            } catch (error) {
+                console.error("Error al eliminar:", error);
+                // Aquí podrías mostrar un mensaje de error
+            } finally {
+                setIsDeleting(false);
+                setIsModalOpen(false);
+                setItemToDelete(null);
+            }
         }
     };
 
@@ -141,6 +151,7 @@ export default function DataTable({
                 onConfirm={confirmDelete}
                 title="Confirmar eliminación"
                 message={`¿Estás seguro de que deseas eliminar este ${entityName.slice(0, -1).toLowerCase()}? Esta acción no se puede deshacer.`}
+                isLoading={isDeleting}
             />
         </div>
     );

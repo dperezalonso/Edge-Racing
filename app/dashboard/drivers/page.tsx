@@ -1,19 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useDrivers } from '@/lib/hooks/useDrivers';
-import { useCompetitions, Competition } from '@/lib/hooks/useCompetitions';
+import { useDrivers } from "@/lib/hooks/useDrivers";
+import { useTeams } from "@/lib/hooks/useTeams";
+import { useCompetitions } from "@/lib/hooks/useCompetitions";
 import DataTable from '@/components/crud/DataTable';
 
 export default function DriversPage() {
-  const { drivers, loading, error, deleteDriver } = useDrivers();
+  const { drivers, loading, error, deleteDriver, refreshDrivers } = useDrivers();
+  const { teams } = useTeams();
   const { competitions } = useCompetitions();
   const [competitionOptions, setCompetitionOptions] = useState<{ label: string; value: string }[]>([]);
 
+  // Recargar datos al montar el componente
   useEffect(() => {
-    // Preparar opciones para el filtro de competiciones
+    refreshDrivers();
+  }, [refreshDrivers]);
+
+  // Preparar opciones para el filtro de competiciones
+  useEffect(() => {
     if (competitions.length > 0) {
-      const options = competitions.map((comp: Competition) => ({
+      const options = competitions.map((comp) => ({
         label: comp.name,
         value: comp.id
       }));
@@ -23,28 +30,47 @@ export default function DriversPage() {
 
   // Definir columnas para la tabla de pilotos
   const columns = [
-    { key: 'position', label: 'Pos' },
     { 
-      key: 'driver', 
+      key: 'first_name', 
       label: 'Piloto',
       render: (item: any) => (
         <div className="flex items-center">
-          <div className="w-2 h-full mr-2" style={{ backgroundColor: item.teamColor }}></div>
-          <span>{item.driver}</span>
+          <div 
+            className="w-2 h-full mr-2" 
+            style={{ backgroundColor: item.teamColor || "#cccccc" }}
+          ></div>
+          <span>{`${item.first_name} ${item.last_name}`}</span>
         </div>
       )
     },
-    { key: 'nationality', label: 'Nacionalidad' },
-    { key: 'team', label: 'Equipo' },
-    { key: 'points', label: 'Puntos' },
-    { key: 'wins', label: 'Victorias' },
-    { key: 'podiums', label: 'Podios' },
+    { key: 'birth_country', label: 'Nacionalidad' },
     { 
-      key: 'competitionId', 
+      key: 'team_id', 
+      label: 'Equipo',
+      render: (item: any) => {
+        const team = teams.find(t => t.id === item.team_id);
+        return team ? team.name : item.team_id;
+      }
+    },
+    { key: 'vehicle_number', label: 'Número' },
+    { key: 'points', label: 'Puntos' },
+    { 
+      key: 'active', 
+      label: 'Estado',
+      render: (item: any) => (
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+          item.active ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'
+        }`}>
+          {item.active ? 'Activo' : 'Inactivo'}
+        </span>
+      )
+    },
+    { 
+      key: 'competition_id', 
       label: 'Competición',
       render: (item: any) => {
-        const competition = competitions.find(c => c.id === item.competitionId);
-        return competition ? competition.name : item.competitionId;
+        const competition = competitions.find(c => c.id === item.competition_id);
+        return competition ? competition.name : item.competition_id;
       }
     },
   ];
@@ -61,6 +87,12 @@ export default function DriversPage() {
     return (
       <div className="bg-red-900/50 border border-red-800 rounded-md p-4 text-red-300">
         {error}
+        <button 
+          onClick={refreshDrivers} 
+          className="ml-4 bg-red-800 hover:bg-red-700 px-3 py-1 rounded-md text-white text-sm"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -74,7 +106,7 @@ export default function DriversPage() {
         entityPath="drivers"
         onDelete={deleteDriver}
         filterOptions={competitionOptions}
-        filterKey="competitionId"
+        filterKey="competition_id"
       />
     </div>
   );

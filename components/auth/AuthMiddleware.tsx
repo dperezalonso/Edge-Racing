@@ -24,8 +24,8 @@ export default function AuthMiddleware({
         router.push('/login');
       } 
       // Si está en la página de login/registro y ya está autenticado, redirigir al dashboard
-      else if ((pathname === '/login' || pathname === '/registro') && isAuth) {
-        router.push('/dashboard');
+      else if ((pathname !== '/login' ) && isAuth) {
+      
       }
       
       setLoading(false);

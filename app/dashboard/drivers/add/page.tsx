@@ -1,18 +1,24 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useDrivers } from '@/lib/hooks/useDrivers';
+import { useTeams } from '@/lib/hooks/useTeams';
 import { useCompetitions } from '@/lib/hooks/useCompetitions';
 import EntityForm from '@/components/crud/EntityForm';
-import { useEffect, useState } from 'react';
 
 export default function AddDriverPage() {
+  const router = useRouter();
   const { addDriver } = useDrivers();
-  const { competitions } = useCompetitions();
+  const { teams, loading: teamsLoading } = useTeams();
+  const { competitions, loading: competitionsLoading } = useCompetitions();
+  
   const [competitionOptions, setCompetitionOptions] = useState<{ label: string; value: string }[]>([]);
-  const [teamOptions, setTeamOptions] = useState<{ label: string; value: string; color: string }[]>([]);
+  const [teamOptions, setTeamOptions] = useState<{ label: string; value: string }[]>([]);
+  const [selectedCompetition, setSelectedCompetition] = useState<string>('');
 
+  // Preparar opciones para el selector de competiciones
   useEffect(() => {
-    // Preparar opciones para el selector de competiciones
     if (competitions.length > 0) {
       const options = competitions.map(comp => ({
         label: comp.name,
@@ -20,52 +26,111 @@ export default function AddDriverPage() {
       }));
       setCompetitionOptions(options);
     }
-
-    // Simular opciones para equipos (en una app real esto vendría de otra API/hook)
-    setTeamOptions([
-      { label: 'Red Bull Racing', value: 'Red Bull Racing', color: '#0600EF' },
-      { label: 'Ferrari', value: 'Ferrari', color: '#DC0000' },
-      { label: 'Mercedes', value: 'Mercedes', color: '#00D2BE' },
-      { label: 'McLaren', value: 'McLaren', color: '#FF8700' },
-      { label: 'Aston Martin', value: 'Aston Martin', color: '#006F62' },
-      { label: 'Ducati Lenovo', value: 'Ducati Lenovo', color: '#FF0000' },
-      { label: 'Pramac Racing', value: 'Pramac Racing', color: '#2596be' },
-      { label: 'Aprilia Racing', value: 'Aprilia Racing', color: '#41BFFF' },
-      { label: 'Gresini Racing', value: 'Gresini Racing', color: '#56A0D3' },
-    ]);
   }, [competitions]);
 
+  // Preparar opciones para el selector de equipos
+  useEffect(() => {
+    if (teams.length > 0) {
+      // Filtrar equipos por competición si hay alguna seleccionada
+      const filteredTeams = selectedCompetition
+        ? teams.filter(team => team.competition_id === selectedCompetition)
+        : teams;
+      
+      const options = filteredTeams.map(team => ({
+        label: team.name,
+        value: team.id
+      }));
+      
+      setTeamOptions(options);
+    }
+  }, [teams, selectedCompetition]);
+
+  // Función para manejar cambios en el selector de competición
+  const handleCompetitionChange = useCallback((value: string) => {
+    console.log("Competición seleccionada:", value);
+    setSelectedCompetition(value);
+  }, []);
+
   // Definir campos para el formulario
-  const fields = [
-    { name: 'driver', label: 'Nombre del Piloto', type: 'text', required: true },
-    { name: 'nationality', label: 'Nacionalidad', type: 'text', required: true },
-    { 
-      name: 'competitionId', 
-      label: 'Competición', 
-      type: 'select', 
-      required: true,
-      options: competitionOptions
-    },
-    { name: 'position', label: 'Posición', type: 'number', required: true },
-    { 
-      name: 'team', 
-      label: 'Equipo', 
-      type: 'select', 
-      required: true, 
-      options: teamOptions.map(t => ({ label: t.label, value: t.value }))
-    },
-    { name: 'teamColor', label: 'Color del Equipo', type: 'color', required: true },
-    { name: 'points', label: 'Puntos', type: 'number', required: true },
-    { name: 'wins', label: 'Victorias', type: 'number', required: true },
-    { name: 'podiums', label: 'Podios', type: 'number', required: true },
-  ];
+  const getFormFields = useCallback(() => {
+    return [
+      { name: 'first_name', label: 'Nombre', type: 'text', required: true },
+      { name: 'last_name', label: 'Apellido', type: 'text', required: true },
+      { name: 'birth_country', label: 'Nacionalidad', type: 'text', required: true },
+      { 
+        name: 'competition_id', 
+        label: 'Competición', 
+        type: 'select', 
+        required: true,
+        options: competitionOptions,
+ 
+      },
+      { 
+        name: 'team_id', 
+        label: 'Equipo', 
+        type: 'select', 
+        required: true, 
+        options: teamOptions
+      },
+      { name: 'vehicle_number', label: 'Número', type: 'number', required: true },
+      { name: 'birth_date', label: 'Fecha de Nacimiento', type: 'date', required: true },
+      { name: 'points', label: 'Puntos', type: 'number', required: true },
+      { 
+        name: 'active', 
+        label: 'Estado', 
+        type: 'select', 
+        required: true,
+        options: [
+          { label: 'Activo', value: 'true' },
+          { label: 'Inactivo', value: 'false' }
+        ]
+      },
+      { name: 'profile_image', label: 'URL de la Imagen', type: 'text', required: false },
+    ];
+  }, [competitionOptions, teamOptions, handleCompetitionChange]);
+
+  // Función para manejar el envío del formulario
+  const handleSubmit = useCallback(async (data: any) => {
+    try {
+      // Preparar datos para la API
+      const driverData = {
+        ...data,
+        // Convertir valores numéricos
+        points: parseInt(data.points, 10) || 0,
+        vehicle_number: parseInt(data.vehicle_number, 10) || 0,
+        // Convertir valor booleano (si viene como string)
+        active: typeof data.active === 'string' ? data.active === 'true' : Boolean(data.active)
+      };
+      
+      // Enviar a la API
+      const result = await addDriver(driverData);
+      return result;
+    } catch (error) {
+      console.error("Error al crear piloto:", error);
+      throw error;
+    }
+  }, [addDriver]);
+
+  if (teamsLoading || competitionsLoading) {
+    return (
+      <div className="flex justify-center items-center h-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[color:var(--f1-red)]"></div>
+      </div>
+    );
+  }
 
   return (
     <EntityForm
-      fields={fields}
-      onSubmit={addDriver}
+      fields={getFormFields()}
+      initialData={{
+        points: 0,
+        vehicle_number: '',
+        active: 'true'
+      }}
+      onSubmit={handleSubmit}
       entityName="Piloto"
       entityPath="drivers"
+      isEditing={false}
     />
   );
 }
