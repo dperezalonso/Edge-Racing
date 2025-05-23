@@ -3,7 +3,6 @@
 import { useCompetitions } from "@/lib/hooks/useCompetitions";
 import DataTable from '@/components/crud/DataTable';
 import { useEffect } from "react";
-import Image from "next/image";
 
 export default function CompetitionsPage() {
   const { competitions, loading, error, deleteCompetition, refreshCompetitions } = useCompetitions();

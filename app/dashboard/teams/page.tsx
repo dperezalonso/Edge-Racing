@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useTeams } from "@/lib/hooks/useTeams";
 import { useCompetitions } from "@/lib/hooks/useCompetitions";
 import DataTable from '@/components/crud/DataTable';
-import Image from 'next/image';
 
 export default function TeamsPage() {
   const { teams, loading, error, deleteTeam, refreshTeams } = useTeams();

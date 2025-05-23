@@ -440,7 +440,6 @@ import { useEffect, useState } from "react";
 import { useCompetitions } from "@/lib/hooks/useCompetitions";
 import { useDrivers } from "@/lib/hooks/useDrivers";
 import { useTeams } from "@/lib/hooks/useTeams";
-import Image from "next/image";
 
 interface DashboardDriver {
   id: string;
