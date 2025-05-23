@@ -1,8 +1,6 @@
 // // 
 // // config/api.ts
-// // export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
-// // export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://172.16.206.6:8000/api';
-// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://www.edgeracing.net.mialias.net/EdgeBack/public/index.php/api';
+
 
 
 // // Configuración de autenticación
@@ -26,11 +24,14 @@
 
 
 // config/api.ts
-export const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://www.edgeracing.net.mialias.net/EdgeBack/public/index.php/api'
-  : '/api'; // Usar proxy de Next.js en desarrollo
+// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://172.16.206.6:8000/api';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://appedgeracing-production.up.railway.app/api';
+// export const API_BASE_URL = process.env.NODE_ENV === 'production' 
+//   ? 'http://www.edgeracing.net.mialias.net/EdgeBack/public/index.php/api'
+//   : '/api'; // Usar proxy de Next.js en desarrollo
 
-// Configuración de autenticación
+// // Configuración de autenticación
 export const API_CONFIG = {
   // Credenciales para acceso a la API (del servidor)
   USERNAME: process.env.API_USERNAME,

@@ -7,8 +7,8 @@ export default function Home() {
       <div className="absolute inset-0 w-full h-full z-0">
       
       
-        {/* 
-          descomentar para ver el video de fondo
+{/*         
+          descomentar para ver el video de fondo */}
         <video 
           autoPlay 
           loop 
@@ -20,7 +20,7 @@ export default function Home() {
          <source src="/videos/EdgeRacingIntro.mp4" type="video/mp4" /> 
           <source src="/videos/racing-background.webm" type="video/webm" />
           Tu navegador no soporta videos HTML5.
-        </video> */}
+        </video>
         {/* Overlay oscuro para mejorar la legibilidad del texto */}
         <div className="absolute inset-0 bg-black/70 z-10"></div>
       </div>

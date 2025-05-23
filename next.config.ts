@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  
   async rewrites() {
     return [
       {
@@ -9,6 +10,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  
   async headers() {
     return [
       {
@@ -22,5 +24,6 @@ const nextConfig: NextConfig = {
     ];
   },
 };
+
 
 export default nextConfig;

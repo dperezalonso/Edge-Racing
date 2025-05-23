@@ -53,24 +53,24 @@ export default function TeamsPage() {
         return competition ? competition.name : item.competition_id;
       }
     },
-    { 
-      key: 'logo', 
-      label: 'Logo',
-      render: (item: any) => (
-        item.logo ? (
-          <div className="w-8 h-8 bg-white p-1 rounded-full">
-            <Image src={item.logo} alt={item.name} className="w-full h-full object-contain" />
-          </div>
-        ) : (
-          <div 
-            className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-            style={{ backgroundColor: item.color }}
-          >
-            {item.name.charAt(0)}
-          </div>
-        )
-      )
-    },
+    // { 
+    //   key: 'logo', 
+    //   label: 'Logo',
+    //   render: (item: any) => (
+    //     item.logo ? (
+    //       <div className="w-8 h-8 bg-white p-1 rounded-full">
+    //         <Image src={item.logo} alt={item.name} className="w-full h-full object-contain" />
+    //       </div>
+    //     ) : (
+    //       <div 
+    //         className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+    //         style={{ backgroundColor: item.color }}
+    //       >
+    //         {item.name.charAt(0)}
+    //       </div>
+    //     )
+    //   )
+    // },
   ];
 
   if (loading) {

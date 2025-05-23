@@ -95,7 +95,7 @@ export default function LoginPage() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Verificar si el usuario viene de un registro exitoso
   useEffect(() => {
     if (searchParams.get('registered') === 'true') {
@@ -120,13 +120,13 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-  
+
     try {
       const response = await login({
         email: formData.email,
         password: formData.password
       });
-  
+
       console.log('Login exitoso:', response);
       router.push('/dashboard'); // Redirigir a la página principal después de iniciar sesión
     } catch (error: any) {
@@ -138,8 +138,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen  flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-3xl space-y-6">
         <Card className="overflow-hidden bg-[color:var(--racing-gray)]/80 border-gray-800">
           <CardContent className="grid p-0 md:grid-cols-2">
             <form className="p-6 md:p-8" onSubmit={handleSubmit}>
@@ -179,12 +179,7 @@ export default function LoginPage() {
                 <div className="grid gap-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password" className="text-gray-300">Contraseña</Label>
-                    <Link
-                      href="#"
-                      className="text-sm text-[color:var(--motogp-blue)] hover:underline ml-auto underline-offset-2"
-                    >
-                      ¿Olvidaste tu contraseña?
-                    </Link>
+
                   </div>
                   <Input
                     id="password"
@@ -211,22 +206,8 @@ export default function LoginPage() {
                     </span>
                   ) : 'Iniciar sesión'}
                 </Button>
-                <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-gray-700">
-                  <span className="relative z-10 bg-[color:var(--racing-gray)]/80 px-2 text-gray-400">
-                    O continuar con
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 gap-4">
-                  <Button variant="outline" className="w-full py-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="size-8">
-                      <path
-                        d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    <span className="sr-only">Login with Google</span>
-                  </Button>
-                </div>
+
+
                 <div className="text-center text-sm text-gray-400">
                   ¿No tienes una cuenta?{" "}
                   <Link href="/registro" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">
@@ -238,6 +219,8 @@ export default function LoginPage() {
             <div className="relative hidden bg-[color:var(--racing-black)] md:block">
               <div className="absolute inset-0 h-full w-full object-cover overflow-hidden">
                 <Image
+                  width={500}
+                  height={500}
                   src="/images/login-bg.jpg"
                   alt="Fondo de inicio de sesión"
                   className="h-full w-full object-cover"
@@ -249,6 +232,19 @@ export default function LoginPage() {
         <div className="text-balance text-center text-xs text-gray-500">
           Al hacer clic en continuar, aceptas nuestros <Link href="#" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">Términos de servicio</Link>{" "}
           y <Link href="#" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">Política de privacidad</Link>.
+        </div>
+        <div className="text-balance text-center text-xs text-gray-500">
+
+          <Link href="/" className="text-[color:var(--motogp-blue)] hover:underline underline-offset-4">
+            <Button
+              className="btn-primary w-50">
+
+              <div className="text-center text-sm text-primary-foreground">
+                volver a {" "}
+                Home
+              </div>
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

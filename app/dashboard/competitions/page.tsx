@@ -15,40 +15,46 @@ export default function CompetitionsPage() {
 
   // Definir columnas para la tabla de competiciones
   const columns = [
-    { 
-      key: 'name', 
+    {
+      key: 'name',
       label: 'Competición',
       render: (item: any) => (
         <div className="flex items-center">
-          <div 
-            className="w-4 h-4 rounded-full mr-2" 
+          <div
+            className="w-4 h-4 rounded-full mr-2"
             style={{ backgroundColor: item.color }}
           ></div>
           {item.name}
         </div>
-      ) 
+      )
     },
     { key: 'description', label: 'Descripción' },
     { key: 'status', label: 'Estado' },
     { key: 'season', label: 'Temporada' },
-    { 
-      key: 'image', 
-      label: 'Logo',
-      render: (item: any) => (
-        item.image ? (
-          <div className="w-8 h-8 bg-white p-1 rounded-full">
-            <Image src={item.image} alt={item.name} className="w-full h-full object-contain" />
-          </div>
-        ) : (
-          <div 
-            className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-            style={{ backgroundColor: item.color }}
-          >
-            {item.name.charAt(0)}
-          </div>
-        )
-      )
-    },
+    // {
+    //   key: 'image',
+    //   label: 'Logo',
+    //   render: (item: any) => (
+    //     item.logo || item.image ? (
+    //       <div className="w-8 h-8 bg-white rounded-full p-1 flex items-center justify-center">
+    //         <Image
+    //           src={item.logo || item.image}
+    //           alt={item.name}
+    //           width={32}
+    //           height={32}
+    //           className="object-contain"
+    //         />
+    //       </div>
+    //     ) : (
+    //       <div
+    //         className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+    //         style={{ backgroundColor: item.color || '#e10600' }}
+    //       >
+    //         {item.name.charAt(0)}
+    //       </div>
+    //     )
+    //   )
+    // },
   ];
 
   if (loading) {
@@ -63,8 +69,8 @@ export default function CompetitionsPage() {
     return (
       <div className="bg-red-900/50 border border-red-800 rounded-md p-4 text-red-300">
         {error}
-        <button 
-          onClick={refreshCompetitions} 
+        <button
+          onClick={refreshCompetitions}
           className="ml-4 bg-red-800 hover:bg-red-700 px-3 py-1 rounded-md text-white text-sm"
         >
           Reintentar

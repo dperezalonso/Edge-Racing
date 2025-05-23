@@ -91,13 +91,7 @@ export default function UserNav() {
             >
               Dashboard
             </Link>
-            <Link 
-              href="/dashboard/profile" 
-              className="block px-4 py-2 text-gray-200 hover:bg-gray-700"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Mi perfil
-            </Link>
+           
             <hr className="border-gray-700 my-1" />
             <button 
               onClick={handleLogout}
