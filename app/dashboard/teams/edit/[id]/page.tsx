@@ -10,7 +10,7 @@ export default function EditTeamPage() {
   const params = useParams();
   const teamId = params.id as string;
   const router = useRouter();
-  const { teams, loading, getTeamById, updateTeam, refreshTeams } = useTeams();
+  const {  loading, getTeamById, updateTeam } = useTeams();
   const { competitions, loading: competitionsLoading } = useCompetitions();
   const [team, setTeam] = useState<any>(null);
   const [formLoading, setFormLoading] = useState(true);

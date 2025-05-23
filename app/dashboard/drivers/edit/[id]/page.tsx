@@ -11,7 +11,7 @@ export default function EditDriverPage() {
   const params = useParams();
   const driverId = params.id as string;
   const router = useRouter();
-  const { drivers, loading: driversLoading, getDriverById, updateDriver, refreshDrivers } = useDrivers();
+  const {  loading: driversLoading, getDriverById, updateDriver } = useDrivers();
   const { teams, loading: teamsLoading } = useTeams();
   const { competitions, loading: competitionsLoading } = useCompetitions();
   const [driver, setDriver] = useState<any>(null);

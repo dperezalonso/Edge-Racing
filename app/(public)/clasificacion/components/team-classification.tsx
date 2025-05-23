@@ -3,14 +3,13 @@
 import { useState, useEffect } from "react";
 
 export default function TeamClassification({
-  teams,
-  competitionId
+  teams
 }: {
   teams: any[];
   competitionId: string;
 }) {
   // Cambiamos el valor predeterminado a "points"
-  const [sort, setSort] = useState<"points">("points");
+  const [sort] = useState<"points">("points");
   const [sortedTeams, setSortedTeams] = useState<any[]>([]);
 
   // Usar useEffect para actualizar los equipos ordenados cuando cambien los datos o el criterio de ordenación

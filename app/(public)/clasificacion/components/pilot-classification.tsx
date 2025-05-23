@@ -11,7 +11,7 @@ export default function PilotClassification({
   teams: any[];
 }) {
   // Cambiamos el valor predeterminado a "points"
-  const [sort, setSort] = useState<"points">("points");
+  const [sort] = useState<"points">("points");
   const [sortedDrivers, setSortedDrivers] = useState<any[]>([]);
 
   // Función para obtener información del equipo por ID

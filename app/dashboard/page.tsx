@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getGlobalDriversRanking, getGlobalTeamsRanking } from "@/services/rankingService";
+// import { getGlobalDriversRanking, getGlobalTeamsRanking } from "@/services/rankingService";
 import { useCompetitions } from "@/lib/hooks/useCompetitions";
-import Image from "next/image";
 
 // Interfaces para tipos de datos
 // interface Driver {
@@ -31,7 +30,6 @@ export default function Dashboard() {
   const { competitions, loading: competitionsLoading } = useCompetitions();
   // const [topDrivers, setTopDrivers] = useState<Driver[]>([]);
   // const [topTeams, setTopTeams] = useState<Team[]>([]);
-  const [totalTracks, setTotalTracks] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,11 +39,11 @@ export default function Dashboard() {
       setLoading(true);
       try {
         // Cargar datos en paralelo
-        const [tracksData] = await Promise.all([
-          getGlobalDriversRanking(),
-          getGlobalTeamsRanking(),
+        // const [tracksData] = await Promise.all([
+        //   getGlobalDriversRanking(),
+        //   getGlobalTeamsRanking(),
 
-        ]);
+        // ]);
 
         // Procesar datos de pilotos
         // const formattedDrivers = driversData.map((driver: any) => ({
@@ -75,7 +73,7 @@ export default function Dashboard() {
 
         // setTopDrivers(sortedDrivers);
         // setTopTeams(sortedTeams);
-        setTotalTracks(tracksData.length);
+        // setTotalTracks(tracksData.length);
 
         setError(null);
 

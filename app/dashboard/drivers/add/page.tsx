@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { useDrivers } from '@/lib/hooks/useDrivers';
 import { useTeams } from '@/lib/hooks/useTeams';
 import { useCompetitions } from '@/lib/hooks/useCompetitions';
 import EntityForm from '@/components/crud/EntityForm';
 
 export default function AddDriverPage() {
-  const router = useRouter();
+
   const { addDriver } = useDrivers();
   const { teams, loading: teamsLoading } = useTeams();
   const { competitions, loading: competitionsLoading } = useCompetitions();

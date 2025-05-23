@@ -9,7 +9,7 @@ export default function EditCompetitionPage() {
   const params = useParams();
   const competitionId = params.id as string;
   const router = useRouter();
-  const { competitions, loading, getCompetitionById, updateCompetition, refreshCompetitions } = useCompetitions();
+  const {  loading, getCompetitionById, updateCompetition } = useCompetitions();
   const [competition, setCompetition] = useState<any>(null);
   const [formLoading, setFormLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
